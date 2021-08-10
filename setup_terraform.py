@@ -1,12 +1,12 @@
 #! /usr/bin/env python3
 import argparse
 import coloredlogs
+import hcl
 import logging
 import os
 from azure.identity import DefaultAzureCredential
-from azure.mgmt.resource import ResourceManagementClient
+from azure.mgmt.resource import ResourceManagementClient, SubscriptionClient
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
-from azure.mgmt.subscription import SubscriptionClient
 from azure.mgmt.storage import StorageManagementClient
 
 
@@ -23,38 +23,17 @@ def main():
     )
     parser.add_argument(
         "-s",
-        "--azure-subscription",
+        "--azure-subscription-name",
         type=str,
-        default="a908aa7c-f906-4b57-b451-cb5023f5bd5c",
-        help="Name or ID for the Azure subscription being used.",
-    )
-    parser.add_argument(
-        "-g",
-        "--resource-group",
-        type=str,
-        default="rg-icenetetl-terraform",
-        help="Name of the resource group where the Terraform backend will be stored",
-    )
-    parser.add_argument(
-        "-a",
-        "--storage-account",
-        type=str,
-        default="sticenetetlterraform",
-        help="Name of the storage account where the Terraform backend will be stored",
-    )
-    parser.add_argument(
-        "-c",
-        "--storage-container",
-        type=str,
-        default="blob-icenetetl-terraform",
-        help="Name of the storage container where the Terraform backend will be stored",
+        default="IceNet",
+        help="Name of the Azure subscription being used.",
     )
     parser.add_argument(
         "--verbose",
         "-v",
         action="count",
         default=0,
-        help="Verbosity level. Default is WARNING and above.",
+        help="Verbosity level: each '-v' will increase logging level by one step (default is WARNING).",
     )
 
     # Configure logging, increasing verbosity by one level for each 'v'
@@ -62,62 +41,43 @@ def main():
     verbosity = max(logging.WARNING - (10 * args.verbose), 0)
     coloredlogs.install(fmt="%(asctime)s %(levelname)8s: %(message)s", level=verbosity)
 
+    # Set Terraform variables
+    tags = {
+        "deployed_by": "Python",
+        "project": "IceNet",
+        "component": "ETL",
+    }
+    # Load variables from backend.tf
+    with open(os.path.join("terraform", "backend.tf"), "r") as f_in:
+        config = hcl.load(f_in)
+    resource_group_name = "rg-icenetetl-terraform"
+    storage_account_name = config["terraform"]["backend"]["azurerm"][
+        "storage_account_name"
+    ]
+    storage_container_name = config["terraform"]["backend"]["azurerm"]["container_name"]
+    subscription_id, tenant_id = get_azure_ids(args.azure_subscription_name)
+
     # Configure the Terraform backend
     configure_terraform_backend(
-        args.azure_subscription,
-        args.resource_group,
-        args.storage_account,
-        args.storage_container,
+        subscription_id,
+        resource_group_name,
+        storage_account_name,
+        storage_container_name,
+        tags=tags,
     )
     storage_key = load_terraform_storage_key(
-        args.azure_subscription, args.resource_group, args.storage_account
+        subscription_id, resource_group_name, storage_account_name
     )
 
-    # Write Terraform backend config to file
-    config_path = os.path.join("terraform", "backend.tf")
-    write_backend_configuration(
-        config_path, args.storage_account, args.storage_container, storage_key
-    )
+    # Write Terraform configs to file
+    write_terraform_configs(subscription_id, tenant_id, storage_key)
 
 
-def write_backend_configuration(config_path, account_name, container_name, account_key):
-    """Write Terraform backend configuration"""
-    logging.info(f"Writing Terraform backend config to {config_path}")
-    state_file_name = "terraform.tfstate"
-    config_lines = [
-        "terraform {",
-        '    backend "azurerm" {',
-        f'        access_key           = "{account_key}"',
-        f'        container_name       = "{container_name}"',
-        f'        key                  = "{state_file_name}"',
-        f'        storage_account_name = "{account_name}"',
-        "    }",
-        "}",
-    ]
-    with open(config_path, "w") as f_out:
-        f_out.writelines(map(lambda l: l + "\n", config_lines))
-
-
-def configure_terraform_backend(
-    subscription_id,
-    resource_group_name,
-    storage_account_name,
-    storage_container_name,
-    location="uksouth",
-):
-    """Ensure that Terraform backend resources are configured"""
+def get_azure_ids(subscription_name):
+    """Get subscription and tenant IDs"""
+    # Connect to Azure clients
     credential = DefaultAzureCredential(exclude_interactive_browser_credential=False)
-
-    # Create Azure clients
-    resource_client = ResourceManagementClient(
-        credential=credential, subscription_id=subscription_id
-    )
-    subscription_client = SubscriptionClient(
-        credential=credential, subscription_id=subscription_id
-    )
-    storage_client = StorageManagementClient(
-        credential=credential, subscription_id=subscription_id
-    )
+    subscription_client = SubscriptionClient(credential=credential)
 
     # Check that the Azure credentials are valid
     try:
@@ -125,6 +85,9 @@ def configure_terraform_backend(
             logging.debug(
                 f"Found subscription {subscription.display_name} ({subscription.id})"
             )
+            if subscription.display_name == subscription_name:
+                subscription_id = subscription.subscription_id
+                tenant_id = subscription.tenant_id
         logging.info(
             f"Successfully authenticated using: {credential._successful_credential.__class__.__name__}"
         )
@@ -133,11 +96,51 @@ def configure_terraform_backend(
             "Failed to authenticate with Azure! Please ensure that you can use one of the methods below:"
         )
         raise
+    return (subscription_id, tenant_id)
+
+
+def write_terraform_configs(subscription_id, tenant_id, storage_key):
+    """Write Terraform config files"""
+    # Backend secrets
+    backend_secrets_path = os.path.join("terraform", "backend.secrets")
+    logging.info(f"Writing Terraform backend secrets to {backend_secrets_path}")
+    backend_secrets = {
+        "access_key": storage_key,
+    }
+    with open(backend_secrets_path, "w") as f_out:
+        for key, value in backend_secrets.items():
+            f_out.write(f'{key} = "{value}"\n')
+
+    # Azure secrets
+    azure_secrets_path = os.path.join("terraform", "azure.secrets")
+    logging.info(f"Writing Azure tenancy details to {azure_secrets_path}")
+    azure_vars = {
+        "subscription_id": subscription_id,
+        "tenant_id": tenant_id,
+    }
+    with open(azure_secrets_path, "w") as f_out:
+        for key, value in azure_vars.items():
+            f_out.write(f'{key} = "{value}"\n')
+
+
+def configure_terraform_backend(
+    subscription_id,
+    resource_group_name,
+    storage_account_name,
+    storage_container_name,
+    tags={},
+    location="uksouth",
+):
+    """Ensure that Terraform backend resources are configured"""
+    # Connect to Azure clients
+    credential = DefaultAzureCredential(exclude_interactive_browser_credential=False)
+    resource_client = ResourceManagementClient(credential, subscription_id)
+    storage_client = StorageManagementClient(credential, subscription_id)
 
     # Ensure that resource group exists
     logging.info(f"Ensuring that resource group {resource_group_name} exists...")
     resource_client.resource_groups.create_or_update(
-        resource_group_name, {"location": location, "tags": {"component": "icenetetl"}}
+        resource_group_name, {"location": location, "tags": tags}
     )
     for resource_group in filter(
         lambda group: group.name == resource_group_name,
@@ -157,7 +160,7 @@ def configure_terraform_backend(
                 "location": location,
                 "kind": "StorageV2",
                 "sku": {"name": "Standard_LRS"},
-                "tags": {"component": "icenetetl"},
+                "tags": tags,
             },
         )
         storage_account = poller.result()
@@ -165,7 +168,7 @@ def configure_terraform_backend(
             f"Found storage account {storage_account.name} in {storage_account.location}"
         )
     except HttpResponseError:
-        logging.error("Failed to create storage account {storage_account_name}!")
+        logging.error(f"Failed to create storage account {storage_account_name}!")
         raise
 
     # Ensure that storage container exists
@@ -188,15 +191,11 @@ def load_terraform_storage_key(
     resource_group_name,
     storage_account_name,
 ):
-    """Load Terraform backend resources are configured"""
+    """Load Terraform storage key"""
+    # Connect to Azure clients
     credential = DefaultAzureCredential(exclude_interactive_browser_credential=False)
+    storage_client = StorageManagementClient(credential, subscription_id)
 
-    # Create Azure clients
-    storage_client = StorageManagementClient(
-        credential=credential, subscription_id=subscription_id
-    )
-
-    """Ensure that Terraform backend resources are configured"""
     # Return the first storage account key
     storage_keys = storage_client.storage_accounts.list_keys(
         resource_group_name, storage_account_name

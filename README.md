@@ -9,3 +9,7 @@ You will need to install the following in order to use this package:
 
 # Setup the Terraform backend
 - Run the `Terraform` setup script `./setup_terraform.py`
+
+
+- `terraform init -backend-config=backend.secrets`
+- `terraform plan -var-file=azure.secrets`
