@@ -22,6 +22,13 @@ def main():
         description="Initialise the Azure infrastructure needed by Terraform"
     )
     parser.add_argument(
+        "-g",
+        "--azure-group-id",
+        type=str,
+        default="35cf3fea-9d3c-4a60-bd00-2c2cd78fbd4c",
+        help="ID of an Azure group containing all developers (default is Turing's 'All Users' group).",
+    )
+    parser.add_argument(
         "-s",
         "--azure-subscription-name",
         type=str,
@@ -29,8 +36,8 @@ def main():
         help="Name of the Azure subscription being used.",
     )
     parser.add_argument(
-        "--verbose",
         "-v",
+        "--verbose",
         action="count",
         default=0,
         help="Verbosity level: each '-v' will increase logging level by one step (default is WARNING).",
@@ -70,7 +77,7 @@ def main():
     )
 
     # Write Terraform configs to file
-    write_terraform_configs(subscription_id, tenant_id, storage_key)
+    write_terraform_configs(subscription_id, tenant_id, args.azure_group_id, storage_key)
 
 
 def get_azure_ids(subscription_name):
@@ -99,7 +106,7 @@ def get_azure_ids(subscription_name):
     return (subscription_id, tenant_id)
 
 
-def write_terraform_configs(subscription_id, tenant_id, storage_key):
+def write_terraform_configs(subscription_id, tenant_id, group_id, storage_key):
     """Write Terraform config files"""
     # Backend secrets
     backend_secrets_path = os.path.join("terraform", "backend.secrets")
@@ -117,6 +124,7 @@ def write_terraform_configs(subscription_id, tenant_id, storage_key):
     azure_vars = {
         "subscription_id": subscription_id,
         "tenant_id": tenant_id,
+        "developers_group_id": group_id,
     }
     with open(azure_secrets_path, "w") as f_out:
         for key, value in azure_vars.items():
