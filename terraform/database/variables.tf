@@ -10,6 +10,10 @@ variable "key_vault_id" {
   description = "ID of the KeyVault where secrets are stored"
   type        = string
 }
+variable "logging_workspace_id" {
+  description = "ID of the Azure log analytics workspace"
+  type        = string
+}
 variable "postgres_cores" {
   description = "Number of cores for the PostgreSQL server."
   type        = number
