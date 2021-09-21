@@ -17,10 +17,11 @@ resource "azurerm_postgresql_server" "this" {
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
 
-  administrator_login          = "${azurerm_key_vault_secret.db_admin_username.value}"
-  administrator_login_password = "${azurerm_key_vault_secret.db_admin_password.value}"
-  version                      = var.postgresql_version
-  ssl_enforcement_enabled      = true
+  administrator_login              = azurerm_key_vault_secret.db_admin_username.value
+  administrator_login_password     = azurerm_key_vault_secret.db_admin_password.value
+  version                          = var.postgresql_version
+  ssl_enforcement_enabled          = true
+  ssl_minimal_tls_version_enforced = "TLS1_2"
 
   lifecycle {
     ignore_changes = [storage_mb]
@@ -43,4 +44,14 @@ resource "azurerm_postgresql_configuration" "this" {
   resource_group_name = azurerm_resource_group.this.name
   server_name         = azurerm_postgresql_server.this.name
   value               = each.value
+}
+
+# Firewall rules
+resource "azurerm_postgresql_firewall_rule" "firewall_rules" {
+  for_each            = { for idx, cidr_block in var.allowed_cidrs : idx => cidr_block }
+  name                = "AllowUser${each.key + 1}"
+  resource_group_name = azurerm_resource_group.this.name
+  server_name         = azurerm_postgresql_server.this.name
+  start_ip_address    = cidrhost(each.value, 0)
+  end_ip_address      = cidrhost(each.value, -1)
 }

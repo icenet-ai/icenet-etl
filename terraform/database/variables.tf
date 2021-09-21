@@ -1,3 +1,7 @@
+variable "allowed_cidrs" {
+  type        = list(string)
+  description = "List of CIDRs that users can connect from"
+}
 variable "database_names" {
   description = "List of database names"
   type        = list(string)

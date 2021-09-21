@@ -29,6 +29,13 @@ def main():
         help="ID of an Azure group containing all developers (default is Turing's 'All Users' group).",
     )
     parser.add_argument(
+        "-i",
+        "--user-ip-addresses",
+        nargs="+",
+        default=["193.60.220.253/32"],
+        help="List of CIDRs that users will connect from.",
+    )
+    parser.add_argument(
         "-s",
         "--azure-subscription-name",
         type=str,
@@ -77,7 +84,13 @@ def main():
     )
 
     # Write Terraform configs to file
-    write_terraform_configs(subscription_id, tenant_id, args.azure_group_id, storage_key)
+    write_terraform_configs(
+        subscription_id,
+        tenant_id,
+        args.azure_group_id,
+        args.user_ip_addresses,
+        storage_key,
+    )
 
 
 def get_azure_ids(subscription_name):
@@ -106,7 +119,9 @@ def get_azure_ids(subscription_name):
     return (subscription_id, tenant_id)
 
 
-def write_terraform_configs(subscription_id, tenant_id, group_id, storage_key):
+def write_terraform_configs(
+    subscription_id, tenant_id, group_id, user_ip_addresses, storage_key
+):
     """Write Terraform config files"""
     # Backend secrets
     backend_secrets_path = os.path.join("terraform", "backend.secrets")
@@ -125,10 +140,14 @@ def write_terraform_configs(subscription_id, tenant_id, group_id, storage_key):
         "subscription_id": subscription_id,
         "tenant_id": tenant_id,
         "developers_group_id": group_id,
+        "users_ip_addresses": user_ip_addresses,
     }
     with open(azure_secrets_path, "w") as f_out:
         for key, value in azure_vars.items():
-            f_out.write(f'{key} = "{value}"\n')
+            # Strings must be quoted but lists must not be
+            value_ = f'"{value}"' if isinstance(value, str) else value
+            # Write to output file after replacing any single quotes
+            f_out.write(f"{key} = {value_}\n".replace("'", '"'))
 
 
 def configure_terraform_backend(

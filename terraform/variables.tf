@@ -1,4 +1,8 @@
 # These variables must be passed at the command line
+variable "users_ip_addresses" {
+  type        = list(string)
+  description = "List of CIDRs that users can connect from"
+}
 variable "developers_group_id" {
   description = "Azure group containing all developers"
   type        = string

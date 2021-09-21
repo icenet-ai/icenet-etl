@@ -2,7 +2,7 @@
 resource "azurerm_resource_group" "this" {
   name     = "rg-${module.common.project_name}-secrets"
   location = module.common.location
-  tags = local.tags
+  tags     = local.tags
 }
 
 # Create the KeyVault
