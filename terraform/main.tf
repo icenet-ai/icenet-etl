@@ -7,7 +7,7 @@ module "secrets" {
 
 # Logging module
 module "logging" {
-  source         = "./logging"
+  source = "./logging"
 }
 
 # Database module
