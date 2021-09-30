@@ -5,6 +5,11 @@ module "secrets" {
   tenant_id           = var.tenant_id
 }
 
+# Data storage
+module "data" {
+  source = "./data"
+}
+
 # Logging module
 module "logging" {
   source = "./logging"
