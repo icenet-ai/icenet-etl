@@ -6,8 +6,8 @@ Infrastructure for storing IceNet predictions and importing them into a database
 
 You will need to install the following in order to use this package:
 
-- `Python 3.9` (or greater)
 - A [`Microsoft Azure`](https://portal.azure.com) account with at least `Contributor` permissions on the `IceNet` subscription
+- `Python 3.9` (this is the latest version supported by `Azure Functions`)
 
 ## Python
 

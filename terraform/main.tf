@@ -24,3 +24,9 @@ module "database" {
   logging_workspace_id = module.logging.logging_workspace_id
   database_names       = ["icenet"]
 }
+
+# NetCDF processing
+module "processing" {
+  source              = "./processing"
+  storage_account     = module.data.storage_account
+}
