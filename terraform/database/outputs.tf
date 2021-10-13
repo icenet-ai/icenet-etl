@@ -1,6 +1,10 @@
 output "server_fqdn" {
-  description = "FQDN for the PostgreSQL server"
+  description = "FQDN of the PostgreSQL server"
   value       = azurerm_postgresql_server.this.fqdn
+}
+output "server_name" {
+  description = "Name of the PostgreSQL server"
+  value       = azurerm_postgresql_server.this.name
 }
 output "admin_username" {
   description = "Name of the PostgreSQL database"

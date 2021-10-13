@@ -5,6 +5,15 @@ resource "azurerm_resource_group" "this" {
   tags     = local.tags
 }
 
+# For storing logs
+resource "azurerm_application_insights" "this" {
+  name                = "insights-${module.common.project_name}-processing"
+  location            = module.common.location
+  resource_group_name = azurerm_resource_group.this.name
+  application_type    = "web"
+  tags                = local.tags
+}
+
 # Storage container for deploying functions
 resource "azurerm_storage_container" "this" {
   name                  = "deployments"
@@ -23,19 +32,10 @@ resource "azurerm_app_service_plan" "this" {
     tier = "Dynamic"
     size = "Y1"
   }
-  tags = local.tags
   lifecycle {
     ignore_changes = [kind]
   }
-}
-
-# For storing logs
-resource "azurerm_application_insights" "this" {
-  name                = "insights-${module.common.project_name}-processing"
-  location            = module.common.location
-  resource_group_name = azurerm_resource_group.this.name
-  application_type    = "web"
-  tags                = local.tags
+  tags = local.tags
 }
 
 # Functions to be deployed
@@ -56,6 +56,10 @@ resource "azurerm_function_app" "this" {
     "FUNCTIONS_WORKER_RUNTIME"              = "python"
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = "${azurerm_application_insights.this.instrumentation_key}"
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = "InstrumentationKey=${azurerm_application_insights.this.instrumentation_key}"
+    "PSQL_HOST"                             = var.database_fqdn
+    "PSQL_DB"                               = var.database_name
+    "PSQL_USER"                             = var.database_user
+    "PSQL_PWD"                              = var.database_password
   }
   tags = local.tags
 }
@@ -68,6 +72,6 @@ resource "null_resource" "functions" {
   }
 
   provisioner "local-exec" {
-    command = "cd ../azfunctions; echo \"Deploying function from $(pwd)\"; sleep 30; func azure functionapp publish ${local.app_name} --python; cd -"
+    command = "cd ../azfunctions; echo \"Deploying functions from $(pwd)\"; sleep 30; func azure functionapp publish ${local.app_name} --python; cd -"
   }
 }
