@@ -1,20 +1,21 @@
 # Third party
 import pandas as pd
 
-
 def batches(input, size):
     """Yield successive chunks of up to 'size' elements from input."""
     if isinstance(input, pd.DataFrame):
         output = []
         for tuple_ in input.itertuples(False):
             output.append(tuple_)
-            if len(output) == size:
+            if len(output) >= size:
                 yield output
                 output = []
         if output:
             yield output
-    for idx in range(len(input), size):
-        yield input[idx : idx + size]
+            output = []
+    else:
+        for idx in range(0, len(input), size):
+            yield input[idx : idx + size]
 
 
 def human_readable(seconds):
@@ -29,3 +30,7 @@ def human_readable(seconds):
     if minutes > 0:
         return f"{minutes:d}m{seconds:d}s"
     return f"{seconds:d}s"
+
+
+def mean_step_size(input):
+    return (max(input) - min(input)) / (len(input) - 1)

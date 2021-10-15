@@ -29,8 +29,12 @@ resource "azurerm_app_service_plan" "this" {
   kind                = "Linux"
   reserved            = true
   sku {
-    tier = "Dynamic"
-    size = "Y1"
+    # Basic B1: 100 total ACU, 1.75 GB memory £9.49/month
+    # Premium P1V2: 210 total ACU, 3.5 GB memory £60.59/month
+    # Premium P1V3: 195 total ACU, 8 GB memory £92.49/month
+    # Premium P2V3: 195 total ACU, 16 GB memory £184.98/month
+    tier = "Basic"
+    size = "B1"
   }
   lifecycle {
     ignore_changes = [kind]
@@ -66,9 +70,14 @@ resource "azurerm_function_app" "this" {
 
 # Actual function deployment
 resource "null_resource" "functions" {
+  # These define build order
   depends_on = [azurerm_app_service_plan.this, azurerm_function_app.this]
+
+  # These will trigger a redeploy
   triggers = {
     functions = "${local.version}_${join("+", [for value in local.functions : value["name"]])}"
+    service_plan = "${azurerm_app_service_plan.this.id}_${azurerm_app_service_plan.this.sku[0].tier}_${azurerm_app_service_plan.this.sku[0].size}"
+    function_app = "${azurerm_function_app.this.id}_${azurerm_function_app.this.site_config[0].linux_fx_version}"
   }
 
   provisioner "local-exec" {
