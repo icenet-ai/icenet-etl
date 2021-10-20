@@ -1,6 +1,7 @@
 # Third party
 import pandas as pd
 
+
 def batches(input, size):
     """Yield successive chunks of up to 'size' elements from input."""
     if isinstance(input, pd.DataFrame):

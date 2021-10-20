@@ -75,7 +75,7 @@ resource "null_resource" "functions" {
 
   # These will trigger a redeploy
   triggers = {
-    functions = "${local.version}_${join("+", [for value in local.functions : value["name"]])}"
+    functions    = "${local.version}_${join("+", [for value in local.functions : value["name"]])}"
     service_plan = "${azurerm_app_service_plan.this.id}_${azurerm_app_service_plan.this.sku[0].tier}_${azurerm_app_service_plan.this.sku[0].size}"
     function_app = "${azurerm_function_app.this.id}_${azurerm_function_app.this.site_config[0].linux_fx_version}"
   }
