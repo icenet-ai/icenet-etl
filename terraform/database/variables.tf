@@ -33,6 +33,10 @@ variable "storage_mb" {
   description = "Max storage allowed for the PostgreSQL server in MB."
   type        = number
 }
+variable "resource_group_name" {
+  type        = string
+  description = "Resource group of the storage account"
+}
 
 # Load common module
 module "common" {

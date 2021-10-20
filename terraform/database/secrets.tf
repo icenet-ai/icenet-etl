@@ -1,21 +1,21 @@
 # Random strings
 resource "random_string" "db_admin_password" {
   keepers = {
-    resource_group = azurerm_resource_group.this.name
+    resource_group = var.resource_group_name
   }
   length  = 25
   special = true
 }
 resource "random_string" "db_reader_password" {
   keepers = {
-    resource_group = azurerm_resource_group.this.name
+    resource_group = var.resource_group_name
   }
   length  = 25
   special = true
 }
 resource "random_string" "db_writer_password" {
   keepers = {
-    resource_group = azurerm_resource_group.this.name
+    resource_group = var.resource_group_name
   }
   length  = 25
   special = true
