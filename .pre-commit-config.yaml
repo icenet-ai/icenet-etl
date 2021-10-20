@@ -22,3 +22,10 @@ repos:
     rev: 3.9.2
     hooks:
       - id: flake8
+  - repo: local
+    hooks:
+      - id: terraform
+        name: Format Terraform files
+        language: system
+        pass_filenames: false
+        entry: terraform fmt -recursive
