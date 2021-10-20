@@ -97,7 +97,7 @@ class Processor:
         logging.info(f"Ensured that geometries table '{self.tables['geom']}' exists.")
 
         # Calculate the size of the grid cells
-        logging.info(f"Identifying cell geometries from input data...")
+        logging.info("Identifying cell geometries from input data...")
         centroids_x_km, centroids_y_km = self.xr.xc.values, self.xr.yc.values
         x_delta_m = 1000 * int(0.5 * mean_step_size(centroids_x_km))
         y_delta_m = 1000 * int(0.5 * mean_step_size(centroids_y_km))
@@ -174,7 +174,7 @@ class Processor:
         )
 
         # Construct a list of values
-        logging.info(f"Loading predictions from input data...")
+        logging.info("Loading predictions from input data...")
         df_predictions = (
             self.xr.where(self.xr["mean"] > 0).to_dataframe().dropna().reset_index()
         )
@@ -187,7 +187,7 @@ class Processor:
         logging.info(f"Loaded {df_predictions.shape[0]} predictions from input data.")
 
         # Get cell IDs by loading existing cells and merging onto list of predictions
-        logging.info(f"Identifying cell IDs for all predictions...")
+        logging.info("Identifying cell IDs for all predictions...")
         df_cells = pd.io.sql.read_sql_query(
             f"SELECT cell_id, centroid_x, centroid_y FROM {self.tables['geom']};",
             self.cnxn,
