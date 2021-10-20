@@ -32,7 +32,7 @@ def main():
         "-i",
         "--user-ip-addresses",
         nargs="+",
-        default=["193.60.220.253/32", "194.66.0.0/24"], # Turing and BAS VPNs
+        default=["193.60.220.253/32", "194.66.0.0/24"],  # Turing and BAS VPNs
         help="List of CIDRs that users will connect from.",
     )
     parser.add_argument(
