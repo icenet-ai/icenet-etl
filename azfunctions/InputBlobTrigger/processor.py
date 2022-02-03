@@ -23,9 +23,18 @@ class Processor:
         self.cnxn_ = None
         self.cursor_ = None
         self.tables = {
-            "geom": "cell",
-            "predictions": "prediction",
-            "latest": "prediction_latest",
+            "geom": {
+                "north": "north_cell",
+                "south": "south_cell",
+            },
+            "predictions": {
+                "north": "north_prediction",
+                "south": "south_prediction",
+            },
+            "latest": {
+                "north": "north_prediction_latest",
+                "south": "south_prediction_latest",
+            },
         }
         self.xr = None
         self.hemisphere = None
@@ -92,11 +101,11 @@ class Processor:
         """Update the table of geometries, creating it if necessary."""
         # Ensure that geometry table exists
         logging.info(
-            f"Ensuring that geometries table '{self.tables['geom']}' exists..."
+            f"Ensuring that geometries table '{self.tables['geom'][self.hemisphere]}' exists..."
         )
         self.cursor.execute(
             f"""
-            CREATE TABLE IF NOT EXISTS {self.tables['geom']} (
+            CREATE TABLE IF NOT EXISTS {self.tables['geom'][self.hemisphere]} (
                 cell_id SERIAL PRIMARY KEY,
                 centroid_x int4,
                 centroid_y int4,
@@ -107,7 +116,9 @@ class Processor:
             """
         )
         self.cnxn.commit()
-        logging.info(f"Ensured that geometries table '{self.tables['geom']}' exists.")
+        logging.info(
+            f"Ensured that geometries table '{self.tables['geom'][self.hemisphere]}' exists."
+        )
 
         # Calculate the size of the grid cells
         logging.info("Identifying cell geometries from input data...")
@@ -137,7 +148,7 @@ class Processor:
 
         # Insert geometries into the database
         logging.info(
-            f"Ensuring that '{self.tables['geom']}' contains all {len(records)} geometries..."
+            f"Ensuring that '{self.tables['geom'][self.hemisphere]}' contains all {len(records)} geometries..."
         )
         n_batches = int(math.ceil(len(records) / self.batch_size))
         start_time = time.monotonic()
@@ -148,7 +159,7 @@ class Processor:
             for record in record_batch:
                 self.cursor.execute(
                     f"""
-                    INSERT INTO {self.tables['geom']} (cell_id, centroid_x, centroid_y, geom_6931, geom_4326)
+                    INSERT INTO {self.tables['geom'][self.hemisphere]} (cell_id, centroid_x, centroid_y, geom_6931, geom_4326)
                     VALUES(DEFAULT, %s, %s, ST_GeomFromText(%s, 6931), ST_Transform(ST_GeomFromText(%s, 6931), 4326))
                     ON CONFLICT DO NOTHING;
                     """,
@@ -159,17 +170,19 @@ class Processor:
             logging.info(
                 f"Batch {idx}/{n_batches}. Inserted/updated {len(record_batch)} geometries. Time remaining {human_readable(remaining_time)}."
             )
-        logging.info(f"Ensured that '{self.tables['geom']}' contains all geometries.")
+        logging.info(
+            f"Ensured that '{self.tables['geom'][self.hemisphere]}' contains all geometries."
+        )
 
     def update_predictions(self) -> None:
         """Update the table of predictions, creating it if necessary"""
         # Ensure that prediction table exists
         logging.info(
-            f"Ensuring that predictions table '{self.tables['predictions']}' exists..."
+            f"Ensuring that predictions table '{self.tables['predictions'][self.hemisphere]}' exists..."
         )
         self.cursor.execute(
             f"""
-            CREATE TABLE IF NOT EXISTS {self.tables['predictions']} (
+            CREATE TABLE IF NOT EXISTS {self.tables['predictions'][self.hemisphere]} (
                 prediction_id SERIAL PRIMARY KEY,
                 date date,
                 leadtime int4,
@@ -177,13 +190,13 @@ class Processor:
                 mean float4,
                 stddev float4,
                 UNIQUE (date, leadtime, cell_id),
-                CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom']}(cell_id)
+                CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom'][self.hemisphere]}(cell_id)
             );
             """
         )
         self.cnxn.commit()
         logging.info(
-            f"Ensured that predictions table '{self.tables['predictions']}' exists."
+            f"Ensured that predictions table '{self.tables['predictions'][self.hemisphere]}' exists."
         )
 
         # Construct a list of values
@@ -202,7 +215,7 @@ class Processor:
         # Get cell IDs by loading existing cells and merging onto list of predictions
         logging.info("Identifying cell IDs for all predictions...")
         df_cells = pd.io.sql.read_sql_query(
-            f"SELECT cell_id, centroid_x, centroid_y FROM {self.tables['geom']};",
+            f"SELECT cell_id, centroid_x, centroid_y FROM {self.tables['geom'][self.hemisphere]};",
             self.cnxn,
         )
         df_merged = pd.merge(
@@ -216,7 +229,7 @@ class Processor:
 
         # Insert predictions into the database
         logging.info(
-            f"Ensuring that table '{self.tables['predictions']}' contains all {df_merged.shape[0]} predictions..."
+            f"Ensuring that table '{self.tables['predictions'][self.hemisphere]}' contains all {df_merged.shape[0]} predictions..."
         )
         n_batches = int(math.ceil(df_merged.shape[0] / self.batch_size))
         start_time = time.monotonic()
@@ -229,7 +242,7 @@ class Processor:
             for record in record_batch:
                 self.cursor.execute(
                     f"""
-                    INSERT INTO {self.tables['predictions']} (prediction_id, date, leadtime, cell_id, mean, stddev)
+                    INSERT INTO {self.tables['predictions'][self.hemisphere]} (prediction_id, date, leadtime, cell_id, mean, stddev)
                     VALUES(
                         DEFAULT,
                         %s,
@@ -254,33 +267,37 @@ class Processor:
                 f"Batch {idx}/{n_batches}. Inserted/updated {len(record_batch)} predictions. Time remaining {human_readable(remaining_time)}."
             )
         logging.info(
-            f"Ensured that table '{self.tables['predictions']}' contains all {df_merged.shape[0]} predictions."
+            f"Ensured that table '{self.tables['predictions'][self.hemisphere]}' contains all {df_merged.shape[0]} predictions."
         )
 
     def update_latest_prediction(self) -> None:
         """Update the 'latest prediction' view, creating it if necessary"""
         # Ensure that view table exists
-        logging.info(f"Updating materialised view '{self.tables['latest']}'...")
+        logging.info(
+            f"Updating materialised view '{self.tables['latest'][self.hemisphere]}'..."
+        )
         self.cursor.execute(
             f"""
-            DROP MATERIALIZED VIEW {self.tables['latest']};
-            CREATE MATERIALIZED VIEW {self.tables['latest']} AS
+            DROP MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]};
+            CREATE MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]} AS
                 SELECT
                     row_number() OVER (PARTITION BY true) as prediction_latest_id,
-                    {self.tables['predictions']}.date,
-                    {self.tables['predictions']}.leadtime,
-                    {self.tables['predictions']}.mean,
-                    {self.tables['predictions']}.stddev,
-                    {self.tables['geom']}.cell_id,
-                    {self.tables['geom']}.centroid_x,
-                    {self.tables['geom']}.centroid_y,
-                    {self.tables['geom']}.geom_6931,
-                    {self.tables['geom']}.geom_4326
-                FROM {self.tables['predictions']}
-                FULL OUTER JOIN cell ON {self.tables['predictions']}.cell_id = {self.tables['geom']}.cell_id
-                WHERE date = (SELECT max(date) FROM {self.tables['predictions']})
-                GROUP BY {self.tables['geom']}.cell_id, date, leadtime, centroid_x, centroid_y, mean, stddev, geom_6931, geom_4326;
+                    {self.tables['predictions'][self.hemisphere]}.date,
+                    {self.tables['predictions'][self.hemisphere]}.leadtime,
+                    {self.tables['predictions'][self.hemisphere]}.mean,
+                    {self.tables['predictions'][self.hemisphere]}.stddev,
+                    {self.tables['geom'][self.hemisphere]}.cell_id,
+                    {self.tables['geom'][self.hemisphere]}.centroid_x,
+                    {self.tables['geom'][self.hemisphere]}.centroid_y,
+                    {self.tables['geom'][self.hemisphere]}.geom_6931,
+                    {self.tables['geom'][self.hemisphere]}.geom_4326
+                FROM {self.tables['predictions'][self.hemisphere]}
+                FULL OUTER JOIN cell ON {self.tables['predictions'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
+                WHERE date = (SELECT max(date) FROM {self.tables['predictions'][self.hemisphere]})
+                GROUP BY {self.tables['geom'][self.hemisphere]}.cell_id, date, leadtime, centroid_x, centroid_y, mean, stddev, geom_6931, geom_4326;
             """
         )
         self.cnxn.commit()
-        logging.info(f"Updated materialised view '{self.tables['latest']}'.")
+        logging.info(
+            f"Updated materialised view '{self.tables['latest'][self.hemisphere]}'."
+        )
