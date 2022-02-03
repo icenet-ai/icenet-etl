@@ -24,3 +24,6 @@ terraform/azure.secrets
 
 # Ignore lock files
 .terraform.lock.hcl
+
+# IDE files
+.vscode
