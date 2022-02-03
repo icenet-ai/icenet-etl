@@ -28,6 +28,7 @@ class Processor:
             "latest": "prediction_latest",
         }
         self.xr = None
+        self.hemisphere = None
 
     def __del__(self):
         """Destructor."""
@@ -70,6 +71,18 @@ class Processor:
             self.xr = xarray.open_dataset(io.BytesIO(inputBlob.read()))
             logging.info(
                 f"Loaded NetCDF data into array with dimensions: {self.xr.dims}."
+            )
+            keywords = self.xr.attrs.get("keywords", "").lower()
+            lat_max = self.xr.attrs.get("geospatial_lat_max", 0)
+            lat_min = self.xr.attrs.get("geospatial_lat_min", 0)
+            if ("north" in keywords) or (lat_max > 80.0):
+                self.hemisphere = "north"
+            elif ("south" in keywords) or (lat_min < -80):
+                self.hemisphere = "south"
+            if not self.hemisphere:
+                raise ValueError("Could not identify hemisphere!")
+            logging.info(
+                f"Identified data as belonging to the {self.hemisphere}ern hemisphere."
             )
         except ValueError as exc:
             logging.error(f"Could not load NetCDF data from {inputBlob.name}!")
