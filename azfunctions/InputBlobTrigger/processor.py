@@ -4,7 +4,6 @@ import io
 import logging
 import math
 import os
-import time
 
 # Third party
 import azure.functions as func
@@ -14,7 +13,8 @@ from shapely.geometry import Polygon
 import xarray
 
 # Local
-from .utils import batches, human_readable, mean_step_size, InputBlobTriggerException
+from .progress import Progress
+from .utils import batches, InputBlobTriggerException, mean_step_size
 
 
 class Processor:
@@ -186,10 +186,10 @@ class Processor:
             f"{self.log_prefix} Ensuring that '{self.tables['geom'][self.hemisphere]}' contains all {len(records)} geometries..."
         )
         n_batches = int(math.ceil(len(records) / self.batch_size))
-        start_time = time.monotonic()
+        progress = Progress(len(records))
         for idx, record_batch in enumerate(batches(records, self.batch_size), start=1):
             logging.info(
-                f"{self.log_prefix} Preparing to insert/update {len(record_batch)} geometries. Batch {idx}/{n_batches}."
+                f"{self.log_prefix} Batch {idx}/{n_batches} :: preparing to insert/update {len(record_batch)} of {progress.total_records} geometries..."
             )
             for record in record_batch:
                 self.cursor.execute(
@@ -201,9 +201,8 @@ class Processor:
                     record,
                 )
             self.cnxn.commit()
-            remaining_time = (time.monotonic() - start_time) * (n_batches / idx - 1)
             logging.info(
-                f"{self.log_prefix} Inserted/updated {len(record_batch)} geometries. Time remaining {human_readable(remaining_time)}. Batch {idx}/{n_batches}."
+                f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {len(record_batch)} geometries.':<100} {progress.snapshot(idx, n_batches)}"
             )
             # Explicitly delete collections once used
             del record_batch
@@ -268,7 +267,7 @@ class Processor:
             f"{self.log_prefix} Ensuring that table '{self.tables['forecasts'][self.hemisphere]}' contains all {df_forecasts.shape[0]} forecasts..."
         )
         n_batches = int(math.ceil(df_forecasts.shape[0] / self.batch_size))
-        start_time = time.monotonic()
+        progress = Progress(df_forecasts.shape[0])
         for idx, df_batch in enumerate(
             batches(df_forecasts, self.batch_size, as_dataframe=True), start=1
         ):
@@ -282,7 +281,7 @@ class Processor:
             )
             # Insert merged forecasts into database
             logging.info(
-                f"{self.log_prefix} Preparing to insert/update {df_merged.shape[0]} forecasts. Batch {idx}/{n_batches}."
+                f"{self.log_prefix} Batch {idx}/{n_batches} :: preparing to insert/update {df_merged.shape[0]} of {progress.total_records} forecasts..."
             )
             for record in df_merged.itertuples(False):
                 self.cursor.execute(
@@ -307,9 +306,8 @@ class Processor:
                     ],
                 )
             self.cnxn.commit()
-            remaining_time = (time.monotonic() - start_time) * (n_batches / idx - 1)
             logging.info(
-                f"{self.log_prefix} Inserted/updated {df_batch.shape[0]} forecasts. Time remaining {human_readable(remaining_time)}. Batch {idx}/{n_batches}."
+                f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {df_merged.shape[0]} forecasts.':<100} {progress.snapshot(idx, n_batches)}"
             )
             # Explicitly delete collections once used
             del df_batch
