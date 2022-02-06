@@ -13,6 +13,6 @@ def main(inputBlob: func.InputStream):
     processor = Processor(50000)
     processor.load(inputBlob)
     processor.update_geometries()
-    processor.update_predictions()
-    processor.update_latest_prediction()
+    processor.update_forecasts()
+    processor.update_latest_forecast()
     logging.info(f"Finished processing Azure blob: {inputBlob.name}")
