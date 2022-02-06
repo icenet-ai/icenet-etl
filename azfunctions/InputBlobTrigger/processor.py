@@ -1,4 +1,5 @@
 # Standard library
+import datetime
 import io
 import logging
 import math
@@ -184,12 +185,12 @@ class Processor:
             f"""
             CREATE TABLE IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]} (
                 forecast_id SERIAL PRIMARY KEY,
-                date date,
-                leadtime int4,
+                date_forecast_generated date,
+                date_forecast_for date,
                 cell_id int4,
                 mean float4,
                 stddev float4,
-                UNIQUE (date, leadtime, cell_id),
+                UNIQUE (date_forecast_generated, date_forecast_for, cell_id),
                 CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom'][self.hemisphere]}(cell_id)
             );
             """
@@ -242,7 +243,7 @@ class Processor:
             for record in record_batch:
                 self.cursor.execute(
                     f"""
-                    INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date, leadtime, cell_id, mean, stddev)
+                    INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date_forecast_generated, date_forecast_for, cell_id, mean, stddev)
                     VALUES(
                         DEFAULT,
                         %s,
@@ -255,7 +256,7 @@ class Processor:
                     """,
                     [
                         record.time.date(),
-                        record.leadtime,
+                        record.time.date() + datetime.timedelta(record.leadtime),
                         record.cell_id,
                         record.mean,
                         record.stddev,
@@ -282,8 +283,8 @@ class Processor:
             CREATE MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]} AS
                 SELECT
                     row_number() OVER (PARTITION BY true) as forecast_latest_id,
-                    {self.tables['forecasts'][self.hemisphere]}.date,
-                    {self.tables['forecasts'][self.hemisphere]}.leadtime,
+                    {self.tables['forecasts'][self.hemisphere]}.date_forecast_generated,
+                    {self.tables['forecasts'][self.hemisphere]}.date_forecast_for,
                     {self.tables['forecasts'][self.hemisphere]}.mean,
                     {self.tables['forecasts'][self.hemisphere]}.stddev,
                     {self.tables['geom'][self.hemisphere]}.cell_id,
@@ -293,8 +294,8 @@ class Processor:
                     {self.tables['geom'][self.hemisphere]}.geom_4326
                 FROM {self.tables['forecasts'][self.hemisphere]}
                 FULL OUTER JOIN cell ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
-                WHERE date = (SELECT max(date) FROM {self.tables['forecasts'][self.hemisphere]})
-                GROUP BY {self.tables['geom'][self.hemisphere]}.cell_id, date, leadtime, centroid_x, centroid_y, mean, stddev, geom_6931, geom_4326;
+                WHERE date_forecast_generated = (SELECT max(date_forecast_generated) FROM {self.tables['forecasts'][self.hemisphere]})
+                GROUP BY {self.tables['geom'][self.hemisphere]}.cell_id, date_forecast_generated, date_forecast_for, centroid_x, centroid_y, mean, stddev, geom_6931, geom_4326;
             """
         )
         self.cnxn.commit()
