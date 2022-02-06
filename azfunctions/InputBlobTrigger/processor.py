@@ -27,13 +27,13 @@ class Processor:
                 "north": "north_cell",
                 "south": "south_cell",
             },
-            "predictions": {
-                "north": "north_prediction",
-                "south": "south_prediction",
+            "forecasts": {
+                "north": "north_forecast",
+                "south": "south_forecast",
             },
             "latest": {
-                "north": "north_prediction_latest",
-                "south": "south_prediction_latest",
+                "north": "north_forecast_latest",
+                "south": "south_forecast_latest",
             },
         }
         self.xr = None
@@ -174,16 +174,16 @@ class Processor:
             f"Ensured that '{self.tables['geom'][self.hemisphere]}' contains all geometries."
         )
 
-    def update_predictions(self) -> None:
-        """Update the table of predictions, creating it if necessary"""
-        # Ensure that prediction table exists
+    def update_forecasts(self) -> None:
+        """Update the table of forecasts, creating it if necessary"""
+        # Ensure that forecast table exists
         logging.info(
-            f"Ensuring that predictions table '{self.tables['predictions'][self.hemisphere]}' exists..."
+            f"Ensuring that forecasts table '{self.tables['forecasts'][self.hemisphere]}' exists..."
         )
         self.cursor.execute(
             f"""
-            CREATE TABLE IF NOT EXISTS {self.tables['predictions'][self.hemisphere]} (
-                prediction_id SERIAL PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]} (
+                forecast_id SERIAL PRIMARY KEY,
                 date date,
                 leadtime int4,
                 cell_id int4,
@@ -196,40 +196,40 @@ class Processor:
         )
         self.cnxn.commit()
         logging.info(
-            f"Ensured that predictions table '{self.tables['predictions'][self.hemisphere]}' exists."
+            f"Ensured that forecasts table '{self.tables['forecasts'][self.hemisphere]}' exists."
         )
 
         # Construct a list of values
-        logging.info("Loading predictions from input data...")
-        df_predictions = (
+        logging.info("Loading forecasts from input data...")
+        df_forecasts = (
             self.xr.where(self.xr["mean"] > 0).to_dataframe().dropna().reset_index()
         )
-        df_predictions["xc_m"] = pd.to_numeric(
-            1000 * df_predictions["xc"], downcast="integer"
+        df_forecasts["xc_m"] = pd.to_numeric(
+            1000 * df_forecasts["xc"], downcast="integer"
         )
-        df_predictions["yc_m"] = pd.to_numeric(
-            1000 * df_predictions["yc"], downcast="integer"
+        df_forecasts["yc_m"] = pd.to_numeric(
+            1000 * df_forecasts["yc"], downcast="integer"
         )
-        logging.info(f"Loaded {df_predictions.shape[0]} predictions from input data.")
+        logging.info(f"Loaded {df_forecasts.shape[0]} forecasts from input data.")
 
-        # Get cell IDs by loading existing cells and merging onto list of predictions
-        logging.info("Identifying cell IDs for all predictions...")
+        # Get cell IDs by loading existing cells and merging onto list of forecasts
+        logging.info("Identifying cell IDs for all forecasts...")
         df_cells = pd.io.sql.read_sql_query(
             f"SELECT cell_id, centroid_x, centroid_y FROM {self.tables['geom'][self.hemisphere]};",
             self.cnxn,
         )
         df_merged = pd.merge(
-            df_predictions,
+            df_forecasts,
             df_cells,
             how="left",
             left_on=["xc_m", "yc_m"],
             right_on=["centroid_x", "centroid_y"],
         )
-        logging.info(f"Identified cell IDs for {df_merged.shape[0]} predictions.")
+        logging.info(f"Identified cell IDs for {df_merged.shape[0]} forecasts.")
 
-        # Insert predictions into the database
+        # Insert forecasts into the database
         logging.info(
-            f"Ensuring that table '{self.tables['predictions'][self.hemisphere]}' contains all {df_merged.shape[0]} predictions..."
+            f"Ensuring that table '{self.tables['forecasts'][self.hemisphere]}' contains all {df_merged.shape[0]} forecasts..."
         )
         n_batches = int(math.ceil(df_merged.shape[0] / self.batch_size))
         start_time = time.monotonic()
@@ -237,12 +237,12 @@ class Processor:
             batches(df_merged, self.batch_size), start=1
         ):
             logging.info(
-                f"Batch {idx}/{n_batches}. Preparing to insert/update {len(record_batch)} predictions..."
+                f"Batch {idx}/{n_batches}. Preparing to insert/update {len(record_batch)} forecasts..."
             )
             for record in record_batch:
                 self.cursor.execute(
                     f"""
-                    INSERT INTO {self.tables['predictions'][self.hemisphere]} (prediction_id, date, leadtime, cell_id, mean, stddev)
+                    INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date, leadtime, cell_id, mean, stddev)
                     VALUES(
                         DEFAULT,
                         %s,
@@ -264,14 +264,14 @@ class Processor:
             self.cnxn.commit()
             remaining_time = (time.monotonic() - start_time) * (n_batches / idx - 1)
             logging.info(
-                f"Batch {idx}/{n_batches}. Inserted/updated {len(record_batch)} predictions. Time remaining {human_readable(remaining_time)}."
+                f"Batch {idx}/{n_batches}. Inserted/updated {len(record_batch)} forecasts. Time remaining {human_readable(remaining_time)}."
             )
         logging.info(
-            f"Ensured that table '{self.tables['predictions'][self.hemisphere]}' contains all {df_merged.shape[0]} predictions."
+            f"Ensured that table '{self.tables['forecasts'][self.hemisphere]}' contains all {df_merged.shape[0]} forecasts."
         )
 
-    def update_latest_prediction(self) -> None:
-        """Update the 'latest prediction' view, creating it if necessary"""
+    def update_latest_forecast(self) -> None:
+        """Update the 'latest forecast' view, creating it if necessary"""
         # Ensure that view table exists
         logging.info(
             f"Updating materialised view '{self.tables['latest'][self.hemisphere]}'..."
@@ -281,19 +281,19 @@ class Processor:
             DROP MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]};
             CREATE MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]} AS
                 SELECT
-                    row_number() OVER (PARTITION BY true) as prediction_latest_id,
-                    {self.tables['predictions'][self.hemisphere]}.date,
-                    {self.tables['predictions'][self.hemisphere]}.leadtime,
-                    {self.tables['predictions'][self.hemisphere]}.mean,
-                    {self.tables['predictions'][self.hemisphere]}.stddev,
+                    row_number() OVER (PARTITION BY true) as forecast_latest_id,
+                    {self.tables['forecasts'][self.hemisphere]}.date,
+                    {self.tables['forecasts'][self.hemisphere]}.leadtime,
+                    {self.tables['forecasts'][self.hemisphere]}.mean,
+                    {self.tables['forecasts'][self.hemisphere]}.stddev,
                     {self.tables['geom'][self.hemisphere]}.cell_id,
                     {self.tables['geom'][self.hemisphere]}.centroid_x,
                     {self.tables['geom'][self.hemisphere]}.centroid_y,
                     {self.tables['geom'][self.hemisphere]}.geom_6931,
                     {self.tables['geom'][self.hemisphere]}.geom_4326
-                FROM {self.tables['predictions'][self.hemisphere]}
-                FULL OUTER JOIN cell ON {self.tables['predictions'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
-                WHERE date = (SELECT max(date) FROM {self.tables['predictions'][self.hemisphere]})
+                FROM {self.tables['forecasts'][self.hemisphere]}
+                FULL OUTER JOIN cell ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
+                WHERE date = (SELECT max(date) FROM {self.tables['forecasts'][self.hemisphere]})
                 GROUP BY {self.tables['geom'][self.hemisphere]}.cell_id, date, leadtime, centroid_x, centroid_y, mean, stddev, geom_6931, geom_4326;
             """
         )
