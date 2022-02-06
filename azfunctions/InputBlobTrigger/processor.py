@@ -188,8 +188,8 @@ class Processor:
                 date_forecast_generated date,
                 date_forecast_for date,
                 cell_id int4,
-                mean float4,
-                stddev float4,
+                sea_ice_concentration_mean float4,
+                sea_ice_concentration_stddev float4,
                 UNIQUE (date_forecast_generated, date_forecast_for, cell_id),
                 CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom'][self.hemisphere]}(cell_id)
             );
@@ -243,7 +243,7 @@ class Processor:
             for record in record_batch:
                 self.cursor.execute(
                     f"""
-                    INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date_forecast_generated, date_forecast_for, cell_id, mean, stddev)
+                    INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date_forecast_generated, date_forecast_for, cell_id, sea_ice_concentration_mean, sea_ice_concentration_stddev)
                     VALUES(
                         DEFAULT,
                         %s,
@@ -285,8 +285,8 @@ class Processor:
                     row_number() OVER (PARTITION BY true) as forecast_latest_id,
                     {self.tables['forecasts'][self.hemisphere]}.date_forecast_generated,
                     {self.tables['forecasts'][self.hemisphere]}.date_forecast_for,
-                    {self.tables['forecasts'][self.hemisphere]}.mean,
-                    {self.tables['forecasts'][self.hemisphere]}.stddev,
+                    {self.tables['forecasts'][self.hemisphere]}.sea_ice_concentration_mean,
+                    {self.tables['forecasts'][self.hemisphere]}.sea_ice_concentration_stddev,
                     {self.tables['geom'][self.hemisphere]}.cell_id,
                     {self.tables['geom'][self.hemisphere]}.centroid_x,
                     {self.tables['geom'][self.hemisphere]}.centroid_y,
@@ -295,7 +295,7 @@ class Processor:
                 FROM {self.tables['forecasts'][self.hemisphere]}
                 FULL OUTER JOIN cell ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
                 WHERE date_forecast_generated = (SELECT max(date_forecast_generated) FROM {self.tables['forecasts'][self.hemisphere]})
-                GROUP BY {self.tables['geom'][self.hemisphere]}.cell_id, date_forecast_generated, date_forecast_for, centroid_x, centroid_y, mean, stddev, geom_6931, geom_4326;
+                GROUP BY {self.tables['geom'][self.hemisphere]}.cell_id, date_forecast_generated, date_forecast_for, centroid_x, centroid_y, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_6931, geom_4326;
             """
         )
         self.cnxn.commit()
