@@ -142,6 +142,8 @@ class Processor:
                 geom_4326 geometry,
                 UNIQUE (centroid_x, centroid_y)
             );
+            GRANT SELECT ON TABLE {self.tables['geom'][self.hemisphere]} TO icenetreader;
+            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['geom'][self.hemisphere]} TO icenetwriter;
             """
         )
         self.cnxn.commit()
@@ -225,6 +227,8 @@ class Processor:
                 UNIQUE (date_forecast_generated, date_forecast_for, cell_id),
                 CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom'][self.hemisphere]}(cell_id)
             );
+            GRANT SELECT ON TABLE {self.tables['forecasts'][self.hemisphere]} TO icenetreader;
+            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['forecasts'][self.hemisphere]} TO icenetwriter;
             """
         )
         self.cnxn.commit()
@@ -337,6 +341,8 @@ class Processor:
                 FULL OUTER JOIN {self.tables['geom'][self.hemisphere]} ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
                 WHERE date_forecast_generated = (SELECT max(date_forecast_generated) FROM {self.tables['forecasts'][self.hemisphere]})
                 GROUP BY {self.tables['geom'][self.hemisphere]}.cell_id, date_forecast_generated, date_forecast_for, centroid_x, centroid_y, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326;
+            GRANT SELECT ON TABLE {self.tables['latest'][self.hemisphere]} TO icenetreader;
+            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['latest'][self.hemisphere]} TO icenetwriter;
             """
         )
         self.cnxn.commit()
