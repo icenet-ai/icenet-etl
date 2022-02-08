@@ -332,15 +332,13 @@ class Processor:
                     {self.tables['forecasts'][self.hemisphere]}.date_forecast_for,
                     {self.tables['forecasts'][self.hemisphere]}.sea_ice_concentration_mean,
                     {self.tables['forecasts'][self.hemisphere]}.sea_ice_concentration_stddev,
-                    {self.tables['geom'][self.hemisphere]}.cell_id,
-                    {self.tables['geom'][self.hemisphere]}.centroid_x,
-                    {self.tables['geom'][self.hemisphere]}.centroid_y,
                     {self.tables['geom'][self.hemisphere]}.geom_{self.projections[self.hemisphere]},
                     {self.tables['geom'][self.hemisphere]}.geom_4326
                 FROM {self.tables['forecasts'][self.hemisphere]}
-                FULL OUTER JOIN {self.tables['geom'][self.hemisphere]} ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
+                FULL OUTER JOIN {self.tables['geom'][self.hemisphere]}
+                    ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
                 WHERE date_forecast_generated = (SELECT max(date_forecast_generated) FROM {self.tables['forecasts'][self.hemisphere]})
-                GROUP BY {self.tables['geom'][self.hemisphere]}.cell_id, date_forecast_generated, date_forecast_for, centroid_x, centroid_y, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326;
+                GROUP BY date_forecast_generated, date_forecast_for, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326;
             GRANT SELECT ON TABLE {self.tables['latest'][self.hemisphere]} TO {self.tables['username_reader']};
             GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['latest'][self.hemisphere]} TO {self.tables['username_writer']};
             """
