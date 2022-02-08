@@ -7,10 +7,10 @@ output "server_name" {
   value       = azurerm_postgresql_server.this.name
 }
 output "admin_username" {
-  description = "Name of the PostgreSQL database"
+  description = "Username for the PostgreSQL database admin"
   value       = azurerm_key_vault_secret.db_admin_username.value
 }
 output "admin_password" {
-  description = "Name of the PostgreSQL database"
+  description = "Password for the PostgreSQL database admin"
   value       = azurerm_key_vault_secret.db_admin_password.value
 }
