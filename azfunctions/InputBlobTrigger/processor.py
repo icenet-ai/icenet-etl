@@ -324,7 +324,7 @@ class Processor:
         )
         self.cursor.execute(
             f"""
-            DROP MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]};
+            DROP MATERIALIZED VIEW IF EXISTS {self.tables['latest'][self.hemisphere]};
             CREATE MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]} AS
                 SELECT
                     row_number() OVER (PARTITION BY true) as forecast_latest_id,
