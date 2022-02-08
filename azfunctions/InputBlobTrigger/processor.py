@@ -4,7 +4,6 @@ import io
 import logging
 import math
 import os
-import time
 
 # Third party
 import azure.functions as func
@@ -14,12 +13,14 @@ from shapely.geometry import Polygon
 import xarray
 
 # Local
-from .utils import batches, human_readable, mean_step_size
+from .progress import Progress
+from .utils import batches, InputBlobTriggerException, mean_step_size
 
 
 class Processor:
-    def __init__(self, batch_size):
+    def __init__(self, log_prefix, batch_size):
         """Constructor."""
+        self.log_prefix = log_prefix
         self.batch_size = batch_size
         self.cnxn_ = None
         self.cursor_ = None
@@ -36,6 +37,12 @@ class Processor:
                 "north": "north_forecast_latest",
                 "south": "south_forecast_latest",
             },
+            "username_reader": "icenetreader",
+            "username_writer": "icenetwriter",
+        }
+        self.projections = {
+            "north": "6931",
+            "south": "6932",
         }
         self.xr = None
         self.hemisphere = None
@@ -61,10 +68,14 @@ class Processor:
                     password=db_pwd,
                     host=db_host,
                 )
-                logging.info(f"Connected to database {db_name} on {db_host}.")
-            except psycopg2.OperationalError:
-                logging.error(f"Failed to connect to database {db_name} on {db_host}!")
-                raise
+                logging.info(
+                    f"{self.log_prefix} Connected to database {db_name} on {db_host}."
+                )
+            except psycopg2.OperationalError as exc:
+                logging.error(
+                    f"{self.log_prefix} Failed to connect to database {db_name} on {db_host}!"
+                )
+                raise InputBlobTriggerException(exc)
         return self.cnxn_
 
     @property
@@ -76,33 +87,52 @@ class Processor:
 
     def load(self, inputBlob: func.InputStream) -> None:
         """Load data from a file into an xarray."""
-        logging.info(f"Attempting to load {inputBlob.name}...")
+        logging.info(f"{self.log_prefix} Attempting to load {inputBlob.name}...")
         try:
             self.xr = xarray.open_dataset(io.BytesIO(inputBlob.read()))
             logging.info(
-                f"Loaded NetCDF data into array with dimensions: {self.xr.dims}."
+                f"{self.log_prefix} Loaded NetCDF data into array with dimensions: {self.xr.dims}."
             )
-            keywords = self.xr.attrs.get("keywords", "").lower()
-            lat_max = self.xr.attrs.get("geospatial_lat_max", 0)
-            lat_min = self.xr.attrs.get("geospatial_lat_min", 0)
-            if ("north" in keywords) or (lat_max > 80.0):
+            # Compatibility with old file format
+            compatibility = {}
+            data_variables = list(self.xr.keys())
+            if "mean" in data_variables:
+                compatibility["mean"] = "sic_mean"
+            if "stddev" in data_variables:
+                compatibility["stddev"] = "sic_stddev"
+            if compatibility:
+                self.xr = self.xr.rename(compatibility)
+            logging.info(
+                f"{self.log_prefix} Identified data variables: {list(self.xr.keys())}."
+            )
+            # Try to identify hemisphere from geospatial extent
+            if self.xr.attrs.get("geospatial_lat_max", 0) > 80:
                 self.hemisphere = "north"
-            elif ("south" in keywords) or (lat_min < -80):
+            elif self.xr.attrs.get("geospatial_lat_min", 0) < -80:
                 self.hemisphere = "south"
+            # Otherwise try to do so from keywords
+            if not self.hemisphere:
+                keywords = self.xr.attrs.get("keywords", "").lower()
+                if "north" in keywords and "south" not in keywords:
+                    self.hemisphere = "north"
+                if "south" in keywords and "north" not in keywords:
+                    self.hemisphere = "south"
             if not self.hemisphere:
                 raise ValueError("Could not identify hemisphere!")
             logging.info(
-                f"Identified data as belonging to the {self.hemisphere}ern hemisphere."
+                f"{self.log_prefix} Identified data as belonging to the {self.hemisphere}ern hemisphere."
             )
         except ValueError as exc:
-            logging.error(f"Could not load NetCDF data from {inputBlob.name}!")
-            logging.error(exc)
+            logging.error(
+                f"{self.log_prefix} Could not load NetCDF data from {inputBlob.name}!"
+            )
+            raise InputBlobTriggerException(exc)
 
     def update_geometries(self) -> None:
         """Update the table of geometries, creating it if necessary."""
         # Ensure that geometry table exists
         logging.info(
-            f"Ensuring that geometries table '{self.tables['geom'][self.hemisphere]}' exists..."
+            f"{self.log_prefix} Ensuring that geometries table '{self.tables['geom'][self.hemisphere]}' exists..."
         )
         self.cursor.execute(
             f"""
@@ -110,19 +140,23 @@ class Processor:
                 cell_id SERIAL PRIMARY KEY,
                 centroid_x int4,
                 centroid_y int4,
-                geom_6931 geometry,
+                geom_{self.projections[self.hemisphere]} geometry,
                 geom_4326 geometry,
                 UNIQUE (centroid_x, centroid_y)
             );
+            GRANT SELECT ON TABLE {self.tables['geom'][self.hemisphere]} TO icenetreader;
+            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['geom'][self.hemisphere]} TO icenetwriter;
             """
         )
         self.cnxn.commit()
         logging.info(
-            f"Ensured that geometries table '{self.tables['geom'][self.hemisphere]}' exists."
+            f"{self.log_prefix} Ensured that geometries table '{self.tables['geom'][self.hemisphere]}' exists."
         )
 
         # Calculate the size of the grid cells
-        logging.info("Identifying cell geometries from input data...")
+        logging.info(
+            f"{self.log_prefix} Identifying cell geometries from input data..."
+        )
         centroids_x_km, centroids_y_km = self.xr.xc.values, self.xr.yc.values
         x_delta_m = 1000 * int(0.5 * mean_step_size(centroids_x_km))
         y_delta_m = 1000 * int(0.5 * mean_step_size(centroids_y_km))
@@ -145,41 +179,42 @@ class Processor:
                     ]
                 )
                 records.append((centroid_x_m, centroid_y_m, geometry.wkt, geometry.wkt))
-        logging.info(f"Identified {len(records)} cell geometries.")
+        logging.info(f"{self.log_prefix} Identified {len(records)} cell geometries.")
 
         # Insert geometries into the database
         logging.info(
-            f"Ensuring that '{self.tables['geom'][self.hemisphere]}' contains all {len(records)} geometries..."
+            f"{self.log_prefix} Ensuring that '{self.tables['geom'][self.hemisphere]}' contains all {len(records)} geometries..."
         )
         n_batches = int(math.ceil(len(records) / self.batch_size))
-        start_time = time.monotonic()
+        progress = Progress(len(records))
         for idx, record_batch in enumerate(batches(records, self.batch_size), start=1):
             logging.info(
-                f"Batch {idx}/{n_batches}. Preparing to insert/update {len(record_batch)} geometries..."
+                f"{self.log_prefix} Batch {idx}/{n_batches} :: preparing to insert/update {len(record_batch)} of {progress.total_records} geometries..."
             )
             for record in record_batch:
                 self.cursor.execute(
                     f"""
-                    INSERT INTO {self.tables['geom'][self.hemisphere]} (cell_id, centroid_x, centroid_y, geom_6931, geom_4326)
-                    VALUES(DEFAULT, %s, %s, ST_GeomFromText(%s, 6931), ST_Transform(ST_GeomFromText(%s, 6931), 4326))
+                    INSERT INTO {self.tables['geom'][self.hemisphere]} (cell_id, centroid_x, centroid_y, geom_{self.projections[self.hemisphere]}, geom_4326)
+                    VALUES(DEFAULT, %s, %s, ST_GeomFromText(%s, {self.projections[self.hemisphere]}), ST_Transform(ST_GeomFromText(%s, {self.projections[self.hemisphere]}), 4326))
                     ON CONFLICT DO NOTHING;
                     """,
                     record,
                 )
             self.cnxn.commit()
-            remaining_time = (time.monotonic() - start_time) * (n_batches / idx - 1)
             logging.info(
-                f"Batch {idx}/{n_batches}. Inserted/updated {len(record_batch)} geometries. Time remaining {human_readable(remaining_time)}."
+                f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {len(record_batch)} geometries.':<100} {progress.snapshot(idx, n_batches)}"
             )
+            # Explicitly delete collections once used
+            del record_batch
         logging.info(
-            f"Ensured that '{self.tables['geom'][self.hemisphere]}' contains all geometries."
+            f"{self.log_prefix} Ensured that '{self.tables['geom'][self.hemisphere]}' contains all geometries."
         )
 
     def update_forecasts(self) -> None:
         """Update the table of forecasts, creating it if necessary"""
         # Ensure that forecast table exists
         logging.info(
-            f"Ensuring that forecasts table '{self.tables['forecasts'][self.hemisphere]}' exists..."
+            f"{self.log_prefix} Ensuring that forecasts table '{self.tables['forecasts'][self.hemisphere]}' exists..."
         )
         self.cursor.execute(
             f"""
@@ -193,17 +228,19 @@ class Processor:
                 UNIQUE (date_forecast_generated, date_forecast_for, cell_id),
                 CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom'][self.hemisphere]}(cell_id)
             );
+            GRANT SELECT ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_reader']};
+            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_writer']};
             """
         )
         self.cnxn.commit()
         logging.info(
-            f"Ensured that forecasts table '{self.tables['forecasts'][self.hemisphere]}' exists."
+            f"{self.log_prefix} Ensured that forecasts table '{self.tables['forecasts'][self.hemisphere]}' exists."
         )
 
         # Construct a list of values
-        logging.info("Loading forecasts from input data...")
+        logging.info(f"{self.log_prefix} Loading forecasts from input data...")
         df_forecasts = (
-            self.xr.where(self.xr["mean"] > 0).to_dataframe().dropna().reset_index()
+            self.xr.where(self.xr["sic_mean"] > 0).to_dataframe().dropna().reset_index()
         )
         df_forecasts["xc_m"] = pd.to_numeric(
             1000 * df_forecasts["xc"], downcast="integer"
@@ -211,36 +248,42 @@ class Processor:
         df_forecasts["yc_m"] = pd.to_numeric(
             1000 * df_forecasts["yc"], downcast="integer"
         )
-        logging.info(f"Loaded {df_forecasts.shape[0]} forecasts from input data.")
+        logging.info(
+            f"{self.log_prefix} Loaded {df_forecasts.shape[0]} forecasts from input data."
+        )
 
-        # Get cell IDs by loading existing cells and merging onto list of forecasts
-        logging.info("Identifying cell IDs for all forecasts...")
+        # Load all existing cells for this hemisphere
+        logging.info(f"{self.log_prefix} Identifying cell IDs for all forecasts...")
         df_cells = pd.io.sql.read_sql_query(
             f"SELECT cell_id, centroid_x, centroid_y FROM {self.tables['geom'][self.hemisphere]};",
             self.cnxn,
         )
-        df_merged = pd.merge(
-            df_forecasts,
-            df_cells,
-            how="left",
-            left_on=["xc_m", "yc_m"],
-            right_on=["centroid_x", "centroid_y"],
+        logging.info(
+            f"{self.log_prefix} Loaded {df_cells.shape[0]} cells from the database."
         )
-        logging.info(f"Identified cell IDs for {df_merged.shape[0]} forecasts.")
 
         # Insert forecasts into the database
         logging.info(
-            f"Ensuring that table '{self.tables['forecasts'][self.hemisphere]}' contains all {df_merged.shape[0]} forecasts..."
+            f"{self.log_prefix} Ensuring that table '{self.tables['forecasts'][self.hemisphere]}' contains all {df_forecasts.shape[0]} forecasts..."
         )
-        n_batches = int(math.ceil(df_merged.shape[0] / self.batch_size))
-        start_time = time.monotonic()
-        for idx, record_batch in enumerate(
-            batches(df_merged, self.batch_size), start=1
+        n_batches = int(math.ceil(df_forecasts.shape[0] / self.batch_size))
+        progress = Progress(df_forecasts.shape[0])
+        for idx, df_batch in enumerate(
+            batches(df_forecasts, self.batch_size, as_dataframe=True), start=1
         ):
-            logging.info(
-                f"Batch {idx}/{n_batches}. Preparing to insert/update {len(record_batch)} forecasts..."
+            # Add cell IDs by merging forecasts onto pre-loaded cells
+            df_merged = pd.merge(
+                df_batch,
+                df_cells,
+                how="left",
+                left_on=["xc_m", "yc_m"],
+                right_on=["centroid_x", "centroid_y"],
             )
-            for record in record_batch:
+            # Insert merged forecasts into database
+            logging.info(
+                f"{self.log_prefix} Batch {idx}/{n_batches} :: preparing to insert/update {df_merged.shape[0]} of {progress.total_records} forecasts..."
+            )
+            for record in df_merged.itertuples(False):
                 self.cursor.execute(
                     f"""
                     INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date_forecast_generated, date_forecast_for, cell_id, sea_ice_concentration_mean, sea_ice_concentration_stddev)
@@ -258,28 +301,30 @@ class Processor:
                         record.time.date(),
                         record.time.date() + datetime.timedelta(record.leadtime),
                         record.cell_id,
-                        record.mean,
-                        record.stddev,
+                        record.sic_mean,
+                        record.sic_stddev,
                     ],
                 )
             self.cnxn.commit()
-            remaining_time = (time.monotonic() - start_time) * (n_batches / idx - 1)
             logging.info(
-                f"Batch {idx}/{n_batches}. Inserted/updated {len(record_batch)} forecasts. Time remaining {human_readable(remaining_time)}."
+                f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {df_merged.shape[0]} forecasts.':<100} {progress.snapshot(idx, n_batches)}"
             )
+            # Explicitly delete collections once used
+            del df_batch
+            del df_merged
         logging.info(
-            f"Ensured that table '{self.tables['forecasts'][self.hemisphere]}' contains all {df_merged.shape[0]} forecasts."
+            f"{self.log_prefix} Ensured that table '{self.tables['forecasts'][self.hemisphere]}' contains all {df_forecasts.shape[0]} forecasts."
         )
 
     def update_latest_forecast(self) -> None:
         """Update the 'latest forecast' view, creating it if necessary"""
         # Ensure that view table exists
         logging.info(
-            f"Updating materialised view '{self.tables['latest'][self.hemisphere]}'..."
+            f"{self.log_prefix} Updating materialised view '{self.tables['latest'][self.hemisphere]}'..."
         )
         self.cursor.execute(
             f"""
-            DROP MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]};
+            DROP MATERIALIZED VIEW IF EXISTS {self.tables['latest'][self.hemisphere]};
             CREATE MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]} AS
                 SELECT
                     row_number() OVER (PARTITION BY true) as forecast_latest_id,
@@ -287,18 +332,18 @@ class Processor:
                     {self.tables['forecasts'][self.hemisphere]}.date_forecast_for,
                     {self.tables['forecasts'][self.hemisphere]}.sea_ice_concentration_mean,
                     {self.tables['forecasts'][self.hemisphere]}.sea_ice_concentration_stddev,
-                    {self.tables['geom'][self.hemisphere]}.cell_id,
-                    {self.tables['geom'][self.hemisphere]}.centroid_x,
-                    {self.tables['geom'][self.hemisphere]}.centroid_y,
-                    {self.tables['geom'][self.hemisphere]}.geom_6931,
+                    {self.tables['geom'][self.hemisphere]}.geom_{self.projections[self.hemisphere]},
                     {self.tables['geom'][self.hemisphere]}.geom_4326
                 FROM {self.tables['forecasts'][self.hemisphere]}
-                FULL OUTER JOIN cell ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
+                FULL OUTER JOIN {self.tables['geom'][self.hemisphere]}
+                    ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
                 WHERE date_forecast_generated = (SELECT max(date_forecast_generated) FROM {self.tables['forecasts'][self.hemisphere]})
-                GROUP BY {self.tables['geom'][self.hemisphere]}.cell_id, date_forecast_generated, date_forecast_for, centroid_x, centroid_y, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_6931, geom_4326;
+                GROUP BY date_forecast_generated, date_forecast_for, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326;
+            GRANT SELECT ON TABLE {self.tables['latest'][self.hemisphere]} TO {self.tables['username_reader']};
+            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['latest'][self.hemisphere]} TO {self.tables['username_writer']};
             """
         )
         self.cnxn.commit()
         logging.info(
-            f"Updated materialised view '{self.tables['latest'][self.hemisphere]}'."
+            f"{self.log_prefix} Updated materialised view '{self.tables['latest'][self.hemisphere]}'."
         )
