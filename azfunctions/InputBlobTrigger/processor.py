@@ -228,6 +228,7 @@ class Processor:
                 UNIQUE (date_forecast_generated, date_forecast_for, cell_id),
                 CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom'][self.hemisphere]}(cell_id)
             );
+            CREATE INDEX IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]}_date_forecast_generated_index ON {self.tables['forecasts'][self.hemisphere]} (date_forecast_generated);
             GRANT SELECT ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_reader']};
             GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_writer']};
             """
