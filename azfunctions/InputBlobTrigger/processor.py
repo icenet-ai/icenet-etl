@@ -158,8 +158,8 @@ class Processor:
             f"{self.log_prefix} Identifying cell geometries from input data..."
         )
         centroids_x_km, centroids_y_km = self.xr.xc.values, self.xr.yc.values
-        x_delta_m = 1000 * int(0.5 * mean_step_size(centroids_x_km))
-        y_delta_m = 1000 * int(0.5 * mean_step_size(centroids_y_km))
+        x_delta_m = int(0.5 * 1000 * mean_step_size(centroids_x_km))
+        y_delta_m = int(0.5 * 1000 * mean_step_size(centroids_y_km))
 
         # Construct list of geometry records
         records = []
