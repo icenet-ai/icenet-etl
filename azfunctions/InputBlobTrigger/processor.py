@@ -33,6 +33,7 @@ class Processor:
                 "north": "north_forecast",
                 "south": "south_forecast",
             },
+            "forecast_meta": "forecast_meta",
             "latest": {
                 "north": "north_forecast_latest",
                 "south": "south_forecast_latest",
@@ -332,6 +333,71 @@ class Processor:
             del df_merged
         logging.info(
             f"{self.log_prefix} Ensured that table '{self.tables['forecasts'][self.hemisphere]}' contains all {self.forecasts.shape[0]} forecasts."
+        )
+
+    def update_forecast_meta(self) -> None:
+        """Update the forecast meta table, creating it if necessary"""
+        # Ensure that forecast meta table exists
+        logging.info(
+            f"{self.log_prefix} Ensuring that forecasts meta table '{self.tables['forecast_meta']}' exists..."
+        )
+        self.db_execute_and_commit(
+            f"""
+            CREATE TABLE IF NOT EXISTS {self.tables['forecast_meta']} (
+                forecast_meta_id SERIAL PRIMARY KEY,
+                date_forecast_generated date,
+                date_forecast_first date,
+                date_forecast_last date,
+                hemisphere varchar(5),
+                n_records bigint,
+                UNIQUE (date_forecast_generated, hemisphere)
+            );
+            GRANT SELECT ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_reader']};
+            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_writer']};
+            """
+        )
+        logging.info(
+            f"{self.log_prefix} Ensured that forecasts meta table '{self.tables['forecast_meta']}' exists."
+        )
+        date_forecast_generated = str(
+            pd.to_datetime(self.forecasts["time"].unique()[0]).date()
+        )
+        logging.info(
+            f"{self.log_prefix} Updating forecasts meta table '{self.tables['forecast_meta']}' for {date_forecast_generated} ({self.hemisphere}ern hemisphere)..."
+        )
+        self.db_execute_and_commit(
+            f"""
+            INSERT INTO
+                {self.tables['forecast_meta']} (
+                    date_forecast_generated,
+                    date_forecast_first,
+                    date_forecast_last,
+                    hemisphere,
+                    n_records
+                )
+            SELECT
+                date_forecast_generated,
+                MIN(date_forecast_for) as date_forecast_first,
+                MAX(date_forecast_for) as date_forecast_last,
+                '{self.hemisphere}' as hemisphere,
+                COUNT(*) as n_records
+            FROM
+                {self.hemisphere}_forecast
+            WHERE
+                date_forecast_generated = '{date_forecast_generated}'
+            GROUP BY
+                date_forecast_generated
+            ON CONFLICT (date_forecast_generated, hemisphere) DO UPDATE
+            SET
+                date_forecast_generated = EXCLUDED.date_forecast_generated,
+                date_forecast_first = EXCLUDED.date_forecast_first,
+                date_forecast_last = EXCLUDED.date_forecast_last,
+                hemisphere = EXCLUDED.hemisphere,
+                n_records = EXCLUDED.n_records;
+            """
+        )
+        logging.info(
+            f"{self.log_prefix} Updated forecasts meta table '{self.tables['forecast_meta']}'."
         )
 
     def update_latest_forecast(self) -> None:

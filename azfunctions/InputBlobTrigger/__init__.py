@@ -21,6 +21,7 @@ def main(inputBlob: func.InputStream):
         processor.update_geometries()
         processor.update_forecasts()
         processor.update_latest_forecast()
+        processor.update_forecast_meta()
     except InputBlobTriggerException as exc:
         logging.error(f"{log_prefix} Failed with message:\n{exc}")
     logging.info(f"{log_prefix} Finished processing Azure blob: {inputBlob.name}")
