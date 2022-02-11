@@ -235,7 +235,7 @@ class Processor:
         n_batches = int(math.ceil(len(records) / self.batch_size))
         progress = Progress(len(records))
         for idx, record_batch in enumerate(batches(records, self.batch_size), start=1):
-            logging.info(
+            logging.debug(
                 f"{self.log_prefix} Batch {idx}/{n_batches} :: preparing to insert/update {len(record_batch)} of {progress.total_records} geometries..."
             )
             insert_cmd = f"INSERT INTO {self.tables['geom'][self.hemisphere]} (cell_id, centroid_x, centroid_y, geom_{self.projections[self.hemisphere]}, geom_4326) VALUES\n"
@@ -247,8 +247,9 @@ class Processor:
             )
             insert_cmd += "ON CONFLICT DO NOTHING;"
             self.db_execute_and_commit(insert_cmd)
+            progress.add(len(record_batch))
             logging.info(
-                f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {len(record_batch)} geometries.':<100} {progress.snapshot(idx, n_batches)}"
+                f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {progress.processed_records} of {progress.total_records} geometries.':<100} {progress}"
             )
             # Explicitly delete collections once used
             del record_batch
@@ -309,7 +310,7 @@ class Processor:
                 right_on=["centroid_x", "centroid_y"],
             )
             # Insert merged forecasts into database
-            logging.info(
+            logging.debug(
                 f"{self.log_prefix} Batch {idx}/{n_batches} :: preparing to insert/update {df_merged.shape[0]} of {progress.total_records} forecasts..."
             )
             insert_cmd = f"INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date_forecast_generated, date_forecast_for, cell_id, sea_ice_concentration_mean, sea_ice_concentration_stddev) VALUES\n"
@@ -321,8 +322,9 @@ class Processor:
             )
             insert_cmd += "ON CONFLICT DO NOTHING;"
             self.db_execute_and_commit(insert_cmd)
+            progress.add(df_merged.shape[0])
             logging.info(
-                f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {df_merged.shape[0]} forecasts.':<100} {progress.snapshot(idx, n_batches)}"
+                f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {progress.processed_records} of {progress.total_records} forecasts.':<100} {progress}"
             )
             # Explicitly delete collections once used
             del df_batch
