@@ -276,6 +276,7 @@ class Processor:
                 CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom'][self.hemisphere]}(cell_id)
             );
             CREATE INDEX IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]}_date_forecast_generated_index ON {self.tables['forecasts'][self.hemisphere]} (date_forecast_generated);
+            CREATE INDEX IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]}_cell_id_index ON {self.tables['forecasts'][self.hemisphere]} (cell_id);
             """
         )
         logging.info(
@@ -415,7 +416,7 @@ class Processor:
                     {self.tables['geom'][self.hemisphere]}.geom_{self.projections[self.hemisphere]},
                     {self.tables['geom'][self.hemisphere]}.geom_4326
                 FROM {self.tables['forecasts'][self.hemisphere]}
-                FULL OUTER JOIN {self.tables['geom'][self.hemisphere]}
+                INNER JOIN {self.tables['geom'][self.hemisphere]}
                     ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
                 WHERE date_forecast_generated = (SELECT max(date_forecast_generated) FROM {self.tables['forecasts'][self.hemisphere]})
                 GROUP BY date_forecast_generated, date_forecast_for, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326;
