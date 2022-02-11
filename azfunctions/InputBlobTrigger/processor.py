@@ -197,8 +197,6 @@ class Processor:
                 geom_4326 geometry,
                 UNIQUE (centroid_x, centroid_y)
             );
-            GRANT SELECT ON TABLE {self.tables['geom'][self.hemisphere]} TO icenetreader;
-            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['geom'][self.hemisphere]} TO icenetwriter;
             """
         )
         logging.info(
@@ -277,8 +275,6 @@ class Processor:
                 CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom'][self.hemisphere]}(cell_id)
             );
             CREATE INDEX IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]}_date_forecast_generated_index ON {self.tables['forecasts'][self.hemisphere]} (date_forecast_generated);
-            GRANT SELECT ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_reader']};
-            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_writer']};
             """
         )
         logging.info(
@@ -352,8 +348,6 @@ class Processor:
                 n_records bigint,
                 UNIQUE (date_forecast_generated, hemisphere)
             );
-            GRANT SELECT ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_reader']};
-            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_writer']};
             """
         )
         logging.info(
@@ -423,8 +417,6 @@ class Processor:
                     ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
                 WHERE date_forecast_generated = (SELECT max(date_forecast_generated) FROM {self.tables['forecasts'][self.hemisphere]})
                 GROUP BY date_forecast_generated, date_forecast_for, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326;
-            GRANT SELECT ON TABLE {self.tables['latest'][self.hemisphere]} TO {self.tables['username_reader']};
-            GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['latest'][self.hemisphere]} TO {self.tables['username_writer']};
             """
         )
         logging.info(

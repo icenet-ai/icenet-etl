@@ -21,19 +21,21 @@ resource "postgresql_role" "writer" {
 }
 
 # Role privileges
-resource "postgresql_grant" "read_tables" {
+resource "postgresql_default_privileges" "read_tables" {
   database    = var.database_names[0]
   role        = postgresql_role.reader.name
   schema      = "public"
-  object_type = "schema"
+  owner       = azurerm_key_vault_secret.db_admin_username.value
+  object_type = "table"
   privileges  = ["SELECT"]
-  depends_on  = [azurerm_postgresql_database.this]
+  depends_on  = [postgresql_role.reader]
 }
-resource "postgresql_grant" "write_tables" {
+resource "postgresql_default_privileges" "write_tables" {
   database    = var.database_names[0]
   role        = postgresql_role.writer.name
   schema      = "public"
-  object_type = "schema"
-  privileges  = ["UPDATE", "INSERT", "DELETE"]
-  depends_on  = [azurerm_postgresql_database.this]
+  owner       = azurerm_key_vault_secret.db_admin_username.value
+  object_type = "table"
+  privileges  = ["DELETE", "INSERT", "SELECT", "UPDATE"]
+  depends_on  = [postgresql_role.writer]
 }
