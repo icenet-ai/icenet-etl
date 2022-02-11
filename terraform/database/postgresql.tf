@@ -22,12 +22,6 @@ resource "azurerm_postgresql_server" "this" {
   tags = local.tags
 }
 
-# Install the PostGIS extension
-resource "postgresql_extension" "postgis" {
-  name = "postgis"
-}
-
-
 resource "azurerm_postgresql_database" "this" {
   for_each            = toset(var.database_names)
   name                = each.value
