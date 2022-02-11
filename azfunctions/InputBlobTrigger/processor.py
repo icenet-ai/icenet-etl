@@ -45,6 +45,7 @@ class Processor:
             "south": "6932",
         }
         self.xr = None
+        self.centroids_m = {}
         self.hemisphere = None
 
     def __del__(self):
@@ -122,6 +123,9 @@ class Processor:
             logging.info(
                 f"{self.log_prefix} Identified data as belonging to the {self.hemisphere}ern hemisphere."
             )
+            # Read array into appropriate data structures
+            self.centroids_m["x"] = [int(1000 * x_km) for x_km in self.xr.xc.values]
+            self.centroids_m["y"] = [int(1000 * y_km) for y_km in self.xr.yc.values]
         except ValueError as exc:
             logging.error(
                 f"{self.log_prefix} Could not load NetCDF data from {inputBlob.name}!"
@@ -157,16 +161,13 @@ class Processor:
         logging.info(
             f"{self.log_prefix} Identifying cell geometries from input data..."
         )
-        centroids_x_km, centroids_y_km = self.xr.xc.values, self.xr.yc.values
-        x_delta_m = int(0.5 * 1000 * mean_step_size(centroids_x_km))
-        y_delta_m = int(0.5 * 1000 * mean_step_size(centroids_y_km))
+        x_delta_m = int(0.5 * mean_step_size(self.centroids_m["x"]))
+        y_delta_m = int(0.5 * mean_step_size(self.centroids_m["y"]))
 
         # Construct list of geometry records
         records = []
-        for centroid_x_km in centroids_x_km:
-            centroid_x_m = int(1000 * centroid_x_km)
-            for centroid_y_km in centroids_y_km:
-                centroid_y_m = int(1000 * centroid_y_km)
+        for centroid_x_m in self.centroids_m["x"]:
+            for centroid_y_m in self.centroids_m["y"]:
                 x_min_m, x_max_m = centroid_x_m - x_delta_m, centroid_x_m + x_delta_m
                 y_min_m, y_max_m = centroid_y_m - y_delta_m, centroid_y_m + y_delta_m
                 geometry = Polygon(
