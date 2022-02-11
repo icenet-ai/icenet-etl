@@ -1,5 +1,4 @@
 # Standard library
-import datetime
 import io
 import logging
 import math
@@ -44,8 +43,8 @@ class Processor:
             "north": "6931",
             "south": "6932",
         }
-        self.xr = None
         self.centroids_m = {}
+        self.forecasts = None
         self.hemisphere = None
 
     def __del__(self):
@@ -90,30 +89,30 @@ class Processor:
         """Load data from a file into an xarray."""
         logging.info(f"{self.log_prefix} Attempting to load {inputBlob.name}...")
         try:
-            self.xr = xarray.open_dataset(io.BytesIO(inputBlob.read()))
+            xr = xarray.open_dataset(io.BytesIO(inputBlob.read()))
             logging.info(
-                f"{self.log_prefix} Loaded NetCDF data into array with dimensions: {self.xr.dims}."
+                f"{self.log_prefix} Loaded NetCDF data into array with dimensions: {xr.dims}."
             )
             # Compatibility with old file format
             compatibility = {}
-            data_variables = list(self.xr.keys())
+            data_variables = list(xr.keys())
             if "mean" in data_variables:
                 compatibility["mean"] = "sic_mean"
             if "stddev" in data_variables:
                 compatibility["stddev"] = "sic_stddev"
             if compatibility:
-                self.xr = self.xr.rename(compatibility)
+                xr = xr.rename(compatibility)
             logging.info(
-                f"{self.log_prefix} Identified data variables: {list(self.xr.keys())}."
+                f"{self.log_prefix} Identified data variables: {list(xr.keys())}."
             )
             # Try to identify hemisphere from geospatial extent
-            if self.xr.attrs.get("geospatial_lat_max", 0) > 80:
+            if xr.attrs.get("geospatial_lat_max", 0) > 80:
                 self.hemisphere = "north"
-            elif self.xr.attrs.get("geospatial_lat_min", 0) < -80:
+            elif xr.attrs.get("geospatial_lat_min", 0) < -80:
                 self.hemisphere = "south"
             # Otherwise try to do so from keywords
             if not self.hemisphere:
-                keywords = self.xr.attrs.get("keywords", "").lower()
+                keywords = xr.attrs.get("keywords", "").lower()
                 if "north" in keywords and "south" not in keywords:
                     self.hemisphere = "north"
                 if "south" in keywords and "north" not in keywords:
@@ -124,8 +123,37 @@ class Processor:
                 f"{self.log_prefix} Identified data as belonging to the {self.hemisphere}ern hemisphere."
             )
             # Read array into appropriate data structures
-            self.centroids_m["x"] = [int(1000 * x_km) for x_km in self.xr.xc.values]
-            self.centroids_m["y"] = [int(1000 * y_km) for y_km in self.xr.yc.values]
+            logging.info(f"{self.log_prefix} Loading forecasts from input data...")
+            self.centroids_m["x"] = [int(1000 * x_km) for x_km in xr.xc.values]
+            self.centroids_m["y"] = [int(1000 * y_km) for y_km in xr.yc.values]
+            self.forecasts = (
+                xr.where(xr["sic_mean"] > 0).to_dataframe().dropna().reset_index()
+            )
+            self.forecasts["xc_m"] = pd.to_numeric(
+                1000 * self.forecasts["xc"], downcast="integer"
+            )
+            self.forecasts["yc_m"] = pd.to_numeric(
+                1000 * self.forecasts["yc"], downcast="integer"
+            )
+            self.forecasts["time_forecast"] = self.forecasts["time"] + pd.to_timedelta(
+                self.forecasts["leadtime"], unit="D"
+            )
+            self.forecasts.drop(
+                columns=[
+                    "yc",
+                    "xc",
+                    "leadtime",
+                    "Lambert_Azimuthal_Grid",
+                    "lat",
+                    "lon",
+                ],
+                inplace=True,
+            )
+            logging.info(
+                f"{self.log_prefix} Loaded {self.forecasts.shape[0]} forecasts from input data."
+            )
+            del xr
+
         except ValueError as exc:
             logging.error(
                 f"{self.log_prefix} Could not load NetCDF data from {inputBlob.name}!"
@@ -239,23 +267,8 @@ class Processor:
             f"{self.log_prefix} Ensured that forecasts table '{self.tables['forecasts'][self.hemisphere]}' exists."
         )
 
-        # Construct a list of values
-        logging.info(f"{self.log_prefix} Loading forecasts from input data...")
-        df_forecasts = (
-            self.xr.where(self.xr["sic_mean"] > 0).to_dataframe().dropna().reset_index()
-        )
-        df_forecasts["xc_m"] = pd.to_numeric(
-            1000 * df_forecasts["xc"], downcast="integer"
-        )
-        df_forecasts["yc_m"] = pd.to_numeric(
-            1000 * df_forecasts["yc"], downcast="integer"
-        )
-        logging.info(
-            f"{self.log_prefix} Loaded {df_forecasts.shape[0]} forecasts from input data."
-        )
-
         # Load all existing cells for this hemisphere
-        logging.info(f"{self.log_prefix} Identifying cell IDs for all forecasts...")
+        logging.info(f"{self.log_prefix} Loading geographic cell IDs...")
         df_cells = pd.io.sql.read_sql_query(
             f"SELECT cell_id, centroid_x, centroid_y FROM {self.tables['geom'][self.hemisphere]};",
             self.cnxn,
@@ -266,12 +279,12 @@ class Processor:
 
         # Insert forecasts into the database
         logging.info(
-            f"{self.log_prefix} Ensuring that table '{self.tables['forecasts'][self.hemisphere]}' contains all {df_forecasts.shape[0]} forecasts..."
+            f"{self.log_prefix} Ensuring that table '{self.tables['forecasts'][self.hemisphere]}' contains all {self.forecasts.shape[0]} forecasts..."
         )
-        n_batches = int(math.ceil(df_forecasts.shape[0] / self.batch_size))
-        progress = Progress(df_forecasts.shape[0])
+        n_batches = int(math.ceil(self.forecasts.shape[0] / self.batch_size))
+        progress = Progress(self.forecasts.shape[0])
         for idx, df_batch in enumerate(
-            batches(df_forecasts, self.batch_size, as_dataframe=True), start=1
+            batches(self.forecasts, self.batch_size, as_dataframe=True), start=1
         ):
             # Add cell IDs by merging forecasts onto pre-loaded cells
             df_merged = pd.merge(
@@ -288,7 +301,7 @@ class Processor:
             insert_cmd = f"INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date_forecast_generated, date_forecast_for, cell_id, sea_ice_concentration_mean, sea_ice_concentration_stddev) VALUES\n"
             insert_cmd += ", ".join(
                 [
-                    f"(DEFAULT, '{record.time.date()}', '{record.time.date() + datetime.timedelta(record.leadtime)}', {record.cell_id}, {record.sic_mean}, {record.sic_stddev})"
+                    f"(DEFAULT, '{record.time.date()}', '{record.time_forecast.date()}', {record.cell_id}, {record.sic_mean}, {record.sic_stddev})"
                     for record in df_merged.itertuples(False)
                 ]
             )
@@ -302,7 +315,7 @@ class Processor:
             del df_batch
             del df_merged
         logging.info(
-            f"{self.log_prefix} Ensured that table '{self.tables['forecasts'][self.hemisphere]}' contains all {df_forecasts.shape[0]} forecasts."
+            f"{self.log_prefix} Ensured that table '{self.tables['forecasts'][self.hemisphere]}' contains all {self.forecasts.shape[0]} forecasts."
         )
 
     def update_latest_forecast(self) -> None:
