@@ -34,11 +34,12 @@ resource "azurerm_storage_container" "this" {
 
 # Service plan that functions belong to
 resource "azurerm_app_service_plan" "this" {
-  name                = "plan-${module.common.project_name}-processing"
-  resource_group_name = azurerm_resource_group.this.name
-  location            = module.common.location
-  kind                = "Linux"
-  reserved            = true
+  name                         = "plan-${module.common.project_name}-processing"
+  resource_group_name          = azurerm_resource_group.this.name
+  location                     = module.common.location
+  kind                         = "linux"
+  maximum_elastic_worker_count = 20
+  reserved                     = true
   sku {
     tier = local.app_sku_category
     size = local.app_sku
@@ -60,13 +61,13 @@ resource "azurerm_function_app" "this" {
   os_type                    = "linux"
   version                    = "~3"
   site_config {
-    always_on                 = true
     linux_fx_version          = "Python|3.9"
     use_32_bit_worker_process = false
   }
   app_settings = {
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = "${azurerm_application_insights.this.instrumentation_key}"
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = "InstrumentationKey=${azurerm_application_insights.this.instrumentation_key}"
+    "BUILD_FLAGS"                           = "UseExpressBuild"
     "ENABLE_ORYX_BUILD"                     = "true"
     "FUNCTIONS_WORKER_RUNTIME"              = "python"
     "PSQL_DB"                               = var.database_name
@@ -74,6 +75,7 @@ resource "azurerm_function_app" "this" {
     "PSQL_PWD"                              = var.database_password
     "PSQL_USER"                             = var.database_user
     "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "1"
+    "XDG_CACHE_HOME"                        = "/tmp/.cache"
   }
   tags = local.tags
 }
