@@ -178,7 +178,7 @@ class Processor:
                         [x_min_m, y_max_m],
                     ]
                 )
-                records.append((centroid_x_m, centroid_y_m, geometry.wkt, geometry.wkt))
+                records.append((centroid_x_m, centroid_y_m, geometry.wkt))
         logging.info(f"{self.log_prefix} Identified {len(records)} cell geometries.")
 
         # Insert geometries into the database
@@ -191,15 +191,15 @@ class Processor:
             logging.info(
                 f"{self.log_prefix} Batch {idx}/{n_batches} :: preparing to insert/update {len(record_batch)} of {progress.total_records} geometries..."
             )
-            for record in record_batch:
-                self.cursor.execute(
-                    f"""
-                    INSERT INTO {self.tables['geom'][self.hemisphere]} (cell_id, centroid_x, centroid_y, geom_{self.projections[self.hemisphere]}, geom_4326)
-                    VALUES(DEFAULT, %s, %s, ST_GeomFromText(%s, {self.projections[self.hemisphere]}), ST_Transform(ST_GeomFromText(%s, {self.projections[self.hemisphere]}), 4326))
-                    ON CONFLICT DO NOTHING;
-                    """,
-                    record,
-                )
+            insert_cmd = f"INSERT INTO {self.tables['geom'][self.hemisphere]} (cell_id, centroid_x, centroid_y, geom_{self.projections[self.hemisphere]}, geom_4326) VALUES\n"
+            insert_cmd += ", ".join(
+                [
+                    f"(DEFAULT, {record[0]}, {record[1]}, ST_GeomFromText('{record[2]}', {self.projections[self.hemisphere]}), ST_Transform(ST_GeomFromText('{record[2]}', {self.projections[self.hemisphere]}), 4326))"
+                    for record in record_batch
+                ]
+            )
+            insert_cmd += "ON CONFLICT DO NOTHING;"
+            self.cursor.execute(insert_cmd)
             self.cnxn.commit()
             logging.info(
                 f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {len(record_batch)} geometries.':<100} {progress.snapshot(idx, n_batches)}"
@@ -284,28 +284,15 @@ class Processor:
             logging.info(
                 f"{self.log_prefix} Batch {idx}/{n_batches} :: preparing to insert/update {df_merged.shape[0]} of {progress.total_records} forecasts..."
             )
-            for record in df_merged.itertuples(False):
-                self.cursor.execute(
-                    f"""
-                    INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date_forecast_generated, date_forecast_for, cell_id, sea_ice_concentration_mean, sea_ice_concentration_stddev)
-                    VALUES(
-                        DEFAULT,
-                        %s,
-                        %s,
-                        %s,
-                        %s,
-                        %s
-                    )
-                    ON CONFLICT DO NOTHING;
-                    """,
-                    [
-                        record.time.date(),
-                        record.time.date() + datetime.timedelta(record.leadtime),
-                        record.cell_id,
-                        record.sic_mean,
-                        record.sic_stddev,
-                    ],
-                )
+            insert_cmd = f"INSERT INTO {self.tables['forecasts'][self.hemisphere]} (forecast_id, date_forecast_generated, date_forecast_for, cell_id, sea_ice_concentration_mean, sea_ice_concentration_stddev) VALUES\n"
+            insert_cmd += ", ".join(
+                [
+                    f"(DEFAULT, '{record.time.date()}', '{record.time.date() + datetime.timedelta(record.leadtime)}', {record.cell_id}, {record.sic_mean}, {record.sic_stddev})"
+                    for record in df_merged.itertuples(False)
+                ]
+            )
+            insert_cmd += "ON CONFLICT DO NOTHING;"
+            self.cursor.execute(insert_cmd)
             self.cnxn.commit()
             logging.info(
                 f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {df_merged.shape[0]} forecasts.':<100} {progress.snapshot(idx, n_batches)}"
