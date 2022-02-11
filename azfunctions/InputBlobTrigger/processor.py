@@ -3,6 +3,7 @@ import io
 import logging
 import math
 import os
+import time
 
 # Third party
 import azure.functions as func
@@ -67,6 +68,7 @@ class Processor:
                     user=f"{db_user}@{db_host}",
                     password=db_pwd,
                     host=db_host,
+                    sslmode="require",
                 )
                 logging.info(
                     f"{self.log_prefix} Connected to database {db_name} on {db_host}."
@@ -84,6 +86,24 @@ class Processor:
         if not self.cursor_:
             self.cursor_ = self.cnxn.cursor()
         return self.cursor_
+
+    def db_execute_and_commit(self, cmd, retry=5):
+        retry_counter = 0
+        while True:
+            try:
+                self.cursor.execute(cmd)
+                self.cnxn.commit()
+                break
+            except (Exception, psycopg2.OperationalError) as error:
+                if retry_counter >= retry:
+                    raise error
+                else:
+                    retry_counter += 1
+                    error_string = str(error).replace("\n", " ").strip()
+                    logging.warning(
+                        f"{self.log_prefix} Connection error: {error_string}. Attempt {retry_counter}/{retry}"
+                    )
+                    time.sleep(60)
 
     def load(self, inputBlob: func.InputStream) -> None:
         """Load data from a file into an xarray."""
@@ -166,7 +186,7 @@ class Processor:
         logging.info(
             f"{self.log_prefix} Ensuring that geometries table '{self.tables['geom'][self.hemisphere]}' exists..."
         )
-        self.cursor.execute(
+        self.db_execute_and_commit(
             f"""
             CREATE TABLE IF NOT EXISTS {self.tables['geom'][self.hemisphere]} (
                 cell_id SERIAL PRIMARY KEY,
@@ -180,7 +200,6 @@ class Processor:
             GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['geom'][self.hemisphere]} TO icenetwriter;
             """
         )
-        self.cnxn.commit()
         logging.info(
             f"{self.log_prefix} Ensured that geometries table '{self.tables['geom'][self.hemisphere]}' exists."
         )
@@ -228,8 +247,7 @@ class Processor:
                 ]
             )
             insert_cmd += "ON CONFLICT DO NOTHING;"
-            self.cursor.execute(insert_cmd)
-            self.cnxn.commit()
+            self.db_execute_and_commit(insert_cmd)
             logging.info(
                 f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {len(record_batch)} geometries.':<100} {progress.snapshot(idx, n_batches)}"
             )
@@ -245,7 +263,7 @@ class Processor:
         logging.info(
             f"{self.log_prefix} Ensuring that forecasts table '{self.tables['forecasts'][self.hemisphere]}' exists..."
         )
-        self.cursor.execute(
+        self.db_execute_and_commit(
             f"""
             CREATE TABLE IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]} (
                 forecast_id SERIAL PRIMARY KEY,
@@ -262,7 +280,6 @@ class Processor:
             GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['forecasts'][self.hemisphere]} TO {self.tables['username_writer']};
             """
         )
-        self.cnxn.commit()
         logging.info(
             f"{self.log_prefix} Ensured that forecasts table '{self.tables['forecasts'][self.hemisphere]}' exists."
         )
@@ -306,8 +323,7 @@ class Processor:
                 ]
             )
             insert_cmd += "ON CONFLICT DO NOTHING;"
-            self.cursor.execute(insert_cmd)
-            self.cnxn.commit()
+            self.db_execute_and_commit(insert_cmd)
             logging.info(
                 f"{f'{self.log_prefix} Batch {idx}/{n_batches} :: inserted/updated {df_merged.shape[0]} forecasts.':<100} {progress.snapshot(idx, n_batches)}"
             )
@@ -324,7 +340,7 @@ class Processor:
         logging.info(
             f"{self.log_prefix} Updating materialised view '{self.tables['latest'][self.hemisphere]}'..."
         )
-        self.cursor.execute(
+        self.db_execute_and_commit(
             f"""
             DROP MATERIALIZED VIEW IF EXISTS {self.tables['latest'][self.hemisphere]};
             CREATE MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]} AS
@@ -345,7 +361,6 @@ class Processor:
             GRANT INSERT, DELETE, UPDATE ON TABLE {self.tables['latest'][self.hemisphere]} TO {self.tables['username_writer']};
             """
         )
-        self.cnxn.commit()
         logging.info(
             f"{self.log_prefix} Updated materialised view '{self.tables['latest'][self.hemisphere]}'."
         )
