@@ -9,7 +9,7 @@ from InputBlobTrigger import main
 
 logging.basicConfig(
     datefmt=r"%Y-%m-%d %H:%M:%S",
-    format="{asctime:s} {levelname:<8s} {module:>10s}.{funcName:<20s} {message:s}",
+    format="{asctime:s} {levelname:<8s} {module:>10s}.{funcName:<25s} {message:s}",
     level=logging.INFO,
     style="{",
 )
