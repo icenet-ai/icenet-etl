@@ -362,6 +362,7 @@ class Processor:
         logging.info(
             f"{self.log_prefix} Updating forecasts meta table '{self.tables['forecast_meta']}' for {date_forecast_generated} ({self.hemisphere}ern hemisphere)..."
         )
+        progress = Progress(1)
         self.db_execute_and_commit(
             f"""
             INSERT INTO
@@ -393,8 +394,9 @@ class Processor:
                 n_records = EXCLUDED.n_records;
             """
         )
+        progress.add(1)
         logging.info(
-            f"{self.log_prefix} Updated forecasts meta table '{self.tables['forecast_meta']}'."
+            f"{self.log_prefix} Updated forecasts meta table '{self.tables['forecast_meta']}' {progress}"
         )
 
     def update_latest_forecast(self) -> None:
@@ -403,6 +405,7 @@ class Processor:
         logging.info(
             f"{self.log_prefix} Updating materialised view '{self.tables['latest'][self.hemisphere]}'..."
         )
+        progress = Progress(1)
         self.db_execute_and_commit(
             f"""
             DROP MATERIALIZED VIEW IF EXISTS {self.tables['latest'][self.hemisphere]};
@@ -422,6 +425,7 @@ class Processor:
                 GROUP BY date_forecast_generated, date_forecast_for, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326;
             """
         )
+        progress.add(1)
         logging.info(
-            f"{self.log_prefix} Updated materialised view '{self.tables['latest'][self.hemisphere]}'."
+            f"{self.log_prefix} Updated materialised view '{self.tables['latest'][self.hemisphere]}' {progress}"
         )
