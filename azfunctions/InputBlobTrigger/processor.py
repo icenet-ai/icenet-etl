@@ -280,6 +280,7 @@ class Processor:
                 CONSTRAINT fk_cell_id FOREIGN KEY(cell_id) REFERENCES {self.tables['geom'][self.hemisphere]}(cell_id)
             );
             CREATE INDEX IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]}_date_forecast_generated_index ON {self.tables['forecasts'][self.hemisphere]} (date_forecast_generated);
+            CREATE INDEX IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]}_date_forecast_for_index ON {self.tables['forecasts'][self.hemisphere]} (date_forecast_for);
             CREATE INDEX IF NOT EXISTS {self.tables['forecasts'][self.hemisphere]}_cell_id_index ON {self.tables['forecasts'][self.hemisphere]} (cell_id);
             """
         )
