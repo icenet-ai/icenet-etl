@@ -386,8 +386,6 @@ class Processor:
                 COUNT(*) as n_records
             FROM
                 {self.hemisphere}_forecast
-            WHERE
-                date_forecast_generated = '{date_forecast_generated}'
             GROUP BY
                 date_forecast_generated
             ON CONFLICT (date_forecast_generated, hemisphere) DO UPDATE
