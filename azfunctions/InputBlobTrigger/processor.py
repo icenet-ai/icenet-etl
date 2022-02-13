@@ -14,7 +14,7 @@ import xarray
 
 # Local
 from .progress import Progress
-from .utils import batches, InputBlobTriggerException, mean_step_size
+from .utils import batches, human_readable, InputBlobTriggerException, mean_step_size
 
 
 class Processor:
@@ -90,25 +90,29 @@ class Processor:
 
     def db_execute_and_commit(self, cmd, retry=5):
         """Execute and commit an SQL statement. On failure reset the connection and retry after an exponential delay"""
-        retry_counter = 0
+        retry_counter = 1
         while True:
             try:
                 self.cursor.execute(cmd)
                 self.cnxn.commit()
                 break
             except (Exception, psycopg2.OperationalError) as exc:
-                if retry_counter >= retry:
+                logging.warning(
+                    f"{self.log_prefix} Database connection attempt {retry_counter}/{retry} failed."
+                )
+                logging.warning(f"{self.log_prefix} {' '.join(str(exc).split())}.")
+                if retry_counter > retry:
                     raise InputBlobTriggerException(exc)
                 else:
+                    retry_seconds = 60 * math.exp(retry_counter)
                     retry_counter += 1
-                    error_string = " ".join(str(exc).replace("\n", " ").split()).strip()
-                    logging.warning(
-                        f"{self.log_prefix} Connection error: {error_string}. Attempt {retry_counter}/{retry}"
+                    logging.info(
+                        f"{self.log_prefix} Waiting {human_readable(retry_seconds)} before retrying."
                     )
                     self.cursor_ = None
                     self.cnxn.close()
                     self.cnxn_ = None
-                    time.sleep(60 * math.exp(retry_counter))
+                    time.sleep(retry_seconds)
 
     def load(self, inputBlob: func.InputStream) -> None:
         """Load data from a file into an xarray."""
