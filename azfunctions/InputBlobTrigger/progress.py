@@ -6,7 +6,7 @@ from .utils import human_readable
 
 
 class Progress:
-    def __init__(self, total_records):
+    def __init__(self, total_records=None):
         self.time_start = time.monotonic()
         self.processed_records = 0
         self.total_records = total_records
@@ -15,6 +15,11 @@ class Progress:
         """Add a number of records to the progress counter"""
         self.processed_records += n_records
         self.processed_records = min(self.processed_records, self.total_records)
+
+    @property
+    def elapsed(self):
+        """Amount of time that this progress tracker has been running"""
+        return f"{human_readable(time.monotonic() - self.time_start)}"
 
     def __str__(self):
         """Get the current progress as a string"""

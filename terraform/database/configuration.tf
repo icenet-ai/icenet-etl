@@ -9,7 +9,7 @@ resource "postgresql_role" "reader" {
   name             = azurerm_key_vault_secret.db_reader_username.value
   login            = true
   password         = azurerm_key_vault_secret.db_reader_password.value
-  connection_limit = 4
+  connection_limit = 50
   depends_on       = [azurerm_postgresql_database.this]
 }
 resource "postgresql_role" "writer" {

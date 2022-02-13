@@ -412,11 +412,10 @@ class Processor:
         logging.info(
             f"{self.log_prefix} Updating materialised view '{self.tables['latest'][self.hemisphere]}'..."
         )
-        progress = Progress(1)
+        progress = Progress()
         self.db_execute_and_commit(
             f"""
-            DROP MATERIALIZED VIEW IF EXISTS {self.tables['latest'][self.hemisphere]};
-            CREATE MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]} AS
+            CREATE MATERIALIZED VIEW IF NOT EXISTS {self.tables['latest'][self.hemisphere]} AS
                 SELECT
                     row_number() OVER (PARTITION BY true) as forecast_latest_id,
                     {self.tables['forecasts'][self.hemisphere]}.date_forecast_generated,
@@ -429,12 +428,24 @@ class Processor:
                 INNER JOIN {self.tables['geom'][self.hemisphere]}
                     ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
                 WHERE date_forecast_generated = (SELECT max(date_forecast_generated) FROM {self.tables['forecasts'][self.hemisphere]})
-                GROUP BY date_forecast_generated, date_forecast_for, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326;
+                GROUP BY date_forecast_generated, date_forecast_for, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326
+                WITH NO DATA;
             CREATE INDEX IF NOT EXISTS {self.tables['latest'][self.hemisphere]}_date_forecast_generated_index ON {self.tables['latest'][self.hemisphere]} (date_forecast_generated);
             CREATE INDEX IF NOT EXISTS {self.tables['latest'][self.hemisphere]}_date_forecast_for_index ON {self.tables['latest'][self.hemisphere]} (date_forecast_for);
             """
         )
-        progress.add(1)
         logging.info(
-            f"{self.log_prefix} Updated materialised view '{self.tables['latest'][self.hemisphere]}' {progress}"
+            f"{self.log_prefix} Ensured that materialised view '{self.tables['latest'][self.hemisphere]}' exists in {progress.elapsed}."
+        )
+        logging.info(
+            f"{self.log_prefix} Refreshing materialised view '{self.tables['latest'][self.hemisphere]}'..."
+        )
+        progress = Progress()
+        self.db_execute_and_commit(
+            f"""
+            REFRESH MATERIALIZED VIEW {self.tables['latest'][self.hemisphere]};
+            """
+        )
+        logging.info(
+            f"{self.log_prefix} Refreshed materialised view '{self.tables['latest'][self.hemisphere]}' in {progress.elapsed}."
         )
