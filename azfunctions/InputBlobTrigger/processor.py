@@ -74,7 +74,7 @@ class Processor:
                 logging.info(
                     f"{self.log_prefix} Connected to database {db_name} on {db_host}."
                 )
-            except psycopg2.OperationalError as exc:
+            except (Exception, psycopg2.OperationalError) as exc:
                 logging.error(
                     f"{self.log_prefix} Failed to connect to database {db_name} on {db_host}!"
                 )
@@ -89,22 +89,26 @@ class Processor:
         return self.cursor_
 
     def db_execute_and_commit(self, cmd, retry=5):
+        """Execute and commit an SQL statement. On failure reset the connection and retry after an exponential delay"""
         retry_counter = 0
         while True:
             try:
                 self.cursor.execute(cmd)
                 self.cnxn.commit()
                 break
-            except (Exception, psycopg2.OperationalError) as error:
+            except (Exception, psycopg2.OperationalError) as exc:
                 if retry_counter >= retry:
-                    raise error
+                    raise InputBlobTriggerException(exc)
                 else:
                     retry_counter += 1
-                    error_string = str(error).replace("\n", " ").strip()
+                    error_string = " ".join(str(exc).replace("\n", " ").split()).strip()
                     logging.warning(
                         f"{self.log_prefix} Connection error: {error_string}. Attempt {retry_counter}/{retry}"
                     )
-                    time.sleep(60)
+                    self.cursor_ = None
+                    self.cnxn.close()
+                    self.cnxn_ = None
+                    time.sleep(60 * math.exp(retry_counter))
 
     def load(self, inputBlob: func.InputStream) -> None:
         """Load data from a file into an xarray."""
@@ -139,7 +143,7 @@ class Processor:
                 if "south" in keywords and "north" not in keywords:
                     self.hemisphere = "south"
             if not self.hemisphere:
-                raise ValueError("Could not identify hemisphere!")
+                raise InputBlobTriggerException("Could not identify hemisphere!")
             logging.info(
                 f"{self.log_prefix} Identified data as belonging to the {self.hemisphere}ern hemisphere."
             )
