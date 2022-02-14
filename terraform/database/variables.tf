@@ -1,5 +1,5 @@
 variable "allowed_cidrs" {
-  type        = list(string)
+  type        = map(string)
   description = "List of CIDRs that users can connect from"
 }
 variable "database_names" {
