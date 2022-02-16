@@ -22,12 +22,6 @@ resource "azurerm_postgresql_server" "this" {
   tags = local.tags
 }
 
-# Install the PostGIS extension
-resource "postgresql_extension" "postgis" {
-  name = "postgis"
-}
-
-
 resource "azurerm_postgresql_database" "this" {
   for_each            = toset(var.database_names)
   name                = each.value
@@ -47,8 +41,8 @@ resource "azurerm_postgresql_configuration" "this" {
 
 # Firewall rules
 resource "azurerm_postgresql_firewall_rule" "user_rules" {
-  for_each            = { for idx, cidr_block in var.allowed_cidrs : idx => cidr_block }
-  name                = "AllowUser${each.key + 1}"
+  for_each            = { for name, cidr_block in var.allowed_cidrs : name => cidr_block }
+  name                = "AllowConnectionsFrom${each.key}"
   resource_group_name = var.resource_group_name
   server_name         = azurerm_postgresql_server.this.name
   start_ip_address    = cidrhost(each.value, 0)

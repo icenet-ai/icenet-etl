@@ -19,7 +19,7 @@ module "logging" {
 module "database" {
   source               = "./database"
   resource_group_name  = module.data.rg_name
-  storage_mb           = 5120
+  storage_mb           = 8192
   allowed_cidrs        = var.users_ip_addresses
   key_vault_id         = module.secrets.key_vault_id
   logging_workspace_id = module.logging.logging_workspace_id

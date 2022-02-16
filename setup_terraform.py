@@ -32,7 +32,10 @@ def main():
         "-i",
         "--user-ip-addresses",
         nargs="+",
-        default=["193.60.220.253/32", "194.66.0.0/24"],  # Turing and BAS VPNs
+        default=[
+            "TuringVPN=193.60.220.253/32",  # Turing VPN
+            "BASVPN=194.66.0.0/24",  # BAS VPN
+        ],
         help="List of CIDRs that users will connect from.",
     )
     parser.add_argument(
@@ -49,9 +52,12 @@ def main():
         default=0,
         help="Verbosity level: each '-v' will increase logging level by one step (default is WARNING).",
     )
+    args = parser.parse_args()
+    user_ip_address_dict = {
+        item.split("=")[0]: item.split("=")[1] for item in args.user_ip_addresses
+    }
 
     # Configure logging, increasing verbosity by one level for each 'v'
-    args = parser.parse_args()
     verbosity = max(logging.WARNING - (10 * args.verbose), 0)
     coloredlogs.install(fmt="%(asctime)s %(levelname)8s: %(message)s", level=verbosity)
 
@@ -92,7 +98,7 @@ def main():
         subscription_id,
         tenant_id,
         args.azure_group_id,
-        args.user_ip_addresses,
+        user_ip_address_dict,
         storage_key,
     )
 

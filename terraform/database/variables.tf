@@ -1,5 +1,5 @@
 variable "allowed_cidrs" {
-  type        = list(string)
+  type        = map(string)
   description = "List of CIDRs that users can connect from"
 }
 variable "database_names" {
@@ -22,7 +22,9 @@ variable "postgres_cores" {
 variable "postgresql_configurations" {
   description = "PostgreSQL configurations to apply to the server."
   type        = map(string)
-  default     = {}
+  default = {
+    "idle_in_transaction_session_timeout" : "18000000"
+  }
 }
 variable "postgresql_version" {
   description = "PostgreSQL version used by the server."
