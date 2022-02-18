@@ -423,13 +423,12 @@ class Processor:
                     {self.tables['forecasts'][self.hemisphere]}.cell_id,
                     {self.tables['forecasts'][self.hemisphere]}.sea_ice_concentration_mean,
                     {self.tables['forecasts'][self.hemisphere]}.sea_ice_concentration_stddev,
-                    {self.tables['geom'][self.hemisphere]}.geom_{self.projections[self.hemisphere]},
                     {self.tables['geom'][self.hemisphere]}.geom_4326
                 FROM {self.tables['forecasts'][self.hemisphere]}
                 INNER JOIN {self.tables['geom'][self.hemisphere]}
                     ON {self.tables['forecasts'][self.hemisphere]}.cell_id = {self.tables['geom'][self.hemisphere]}.cell_id
                 WHERE date_forecast_generated = (SELECT max(date_forecast_generated) FROM {self.tables['forecasts'][self.hemisphere]})
-                GROUP BY date_forecast_generated, date_forecast_for, cell_id, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_{self.projections[self.hemisphere]}, geom_4326
+                GROUP BY date_forecast_generated, date_forecast_for, cell_id, sea_ice_concentration_mean, sea_ice_concentration_stddev, geom_4326
                 WITH NO DATA;
             CREATE INDEX IF NOT EXISTS {self.tables['latest'][self.hemisphere]}_date_forecast_generated_index ON {self.tables['latest'][self.hemisphere]} (date_forecast_generated);
             CREATE INDEX IF NOT EXISTS {self.tables['latest'][self.hemisphere]}_date_forecast_for_index ON {self.tables['latest'][self.hemisphere]} (date_forecast_for);
