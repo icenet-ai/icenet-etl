@@ -417,7 +417,7 @@ class Processor:
             f"""
             CREATE MATERIALIZED VIEW IF NOT EXISTS {self.tables['latest'][self.hemisphere]} AS
                 SELECT
-                    row_number() OVER (PARTITION BY true) as forecast_latest_id,
+                    row_number() OVER (PARTITION BY true) as forecast_id,
                     {self.tables['forecasts'][self.hemisphere]}.date_forecast_generated,
                     {self.tables['forecasts'][self.hemisphere]}.date_forecast_for,
                     {self.tables['forecasts'][self.hemisphere]}.cell_id,
