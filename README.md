@@ -22,9 +22,22 @@ Install `Python` requirements with the following:
 
 ## Setup the Terraform backend
 
-- Run the `Terraform` setup script `./setup_terraform.py`
+- Run the `Terraform` setup script `./setup_terraform.py` like so: 
+```
+./setup_terraform.py -v \
+  -i [[redacted]] \
+  -s [[redacted]] \
+  -g [[redacted]] \
+  -rg [[redacted]] \
+  -sa [[accountname]] \
+  -sc [[containername]]```
 - Enter the `terraform` directory with `cd terraform`
-- Initialise `Terraform` by running `terraform init -backend-config=backend.secrets`
+- Initialise `Terraform` by running `terraform init` like so:
+```
+terraform init -backend-config=backend.secrets \
+  -backend-config='storage_account_name=[[accountname]]' \
+  -backend-config='container_name=[[containername]]'
+```
 - Check the actions that `Terraform` will carry out by running `terraform plan -var-file=azure.secrets`
 - Deploy using `Terraform` by running `terraform apply -var-file=azure.secrets`
 
