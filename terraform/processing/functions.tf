@@ -1,14 +1,14 @@
 # Create the resource group
 resource "azurerm_resource_group" "this" {
-  name     = "rg-${module.common.project_name}-processing"
-  location = module.common.location
+  name     = "rg-${var.project_name}-processing"
+  location = var.location
   tags     = local.tags
 }
 
 # For storing logs
 resource "azurerm_application_insights" "this" {
-  name                = "insights-${module.common.project_name}-processing"
-  location            = module.common.location
+  name                = "insights-${var.project_name}-processing"
+  location            = var.location
   resource_group_name = azurerm_resource_group.this.name
   application_type    = "web"
   tags                = local.tags
@@ -16,7 +16,7 @@ resource "azurerm_application_insights" "this" {
 
 # Create the storage account
 resource "azurerm_storage_account" "this" {
-  name                     = "st${module.common.project_name}processing"
+  name                     = "st${var.project_name}processing"
   resource_group_name      = azurerm_resource_group.this.name
   location                 = azurerm_resource_group.this.location
   account_tier             = "Standard"
@@ -34,9 +34,9 @@ resource "azurerm_storage_container" "this" {
 
 # Service plan that functions belong to
 resource "azurerm_app_service_plan" "this" {
-  name                         = "plan-${module.common.project_name}-processing"
+  name                         = "plan-${var.project_name}-processing"
   resource_group_name          = azurerm_resource_group.this.name
-  location                     = module.common.location
+  location                     = var.location
   kind                         = "linux"
   maximum_elastic_worker_count = 20
   reserved                     = true
@@ -53,7 +53,7 @@ resource "azurerm_app_service_plan" "this" {
 # Functions to be deployed
 resource "azurerm_function_app" "this" {
   name                       = local.app_name
-  location                   = module.common.location
+  location                   = var.location
   resource_group_name        = azurerm_resource_group.this.name
   app_service_plan_id        = azurerm_app_service_plan.this.id
   storage_account_name       = var.data_storage_account.name
@@ -61,6 +61,7 @@ resource "azurerm_function_app" "this" {
   os_type                    = "linux"
   version                    = "~3"
   site_config {
+    elastic_instance_minimum  = 1
     linux_fx_version          = "Python|3.9"
     use_32_bit_worker_process = false
   }

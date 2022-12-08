@@ -1,14 +1,14 @@
 # Create the resource group
 resource "azurerm_resource_group" "this" {
-  name     = "rg-${module.common.project_name}-secrets"
-  location = module.common.location
+  name     = "rg-${var.project_name}-secrets"
+  location = var.location
   tags     = local.tags
 }
 
 # Create the KeyVault
 resource "azurerm_key_vault" "this" {
-  name                = "kv-${module.common.project_name}-secrets"
-  location            = module.common.location
+  name                = "kv-${var.project_name}-secrets"
+  location            = var.location
   resource_group_name = azurerm_resource_group.this.name
   sku_name            = "standard"
   tenant_id           = var.tenant_id
