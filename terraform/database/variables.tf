@@ -55,8 +55,6 @@ variable "default_tags" {
 }
 
 # Local variables
-
-# Local variables
 locals {
   tags = merge(
     {

@@ -28,7 +28,7 @@ module "logging" {
 module "database" {
   source               = "./database"
   resource_group_name  = module.data.rg_name
-  location            = var.location
+  location             = var.location
   project_name         = local.project_name
   storage_mb           = 8192
   allowed_cidrs        = var.users_ip_addresses
@@ -48,7 +48,17 @@ module "processing" {
   database_name                = local.database_names[0]
   database_user                = module.database.admin_username
   database_password            = module.database.admin_password
-  location            = var.location
+  location                     = var.location
+  project_name                 = local.project_name
+  default_tags                 = local.tags
+}
+
+# Event grid topics for integrations
+module "events" { 
+  source                       = "./events"
+  
+  resource_group_name          = module.processing.rg_name
+  location                     = var.location
   project_name                 = local.project_name
   default_tags                 = local.tags
 }
