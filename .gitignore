@@ -28,3 +28,6 @@ azfunctions/local.settings.json
 
 # IDE files
 .vscode
+
+# venvs for python
+/venv/

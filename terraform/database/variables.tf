@@ -39,19 +39,30 @@ variable "resource_group_name" {
   type        = string
   description = "Resource group of the storage account"
 }
-
-# Load common module
-module "common" {
-  source = "../common"
+variable "project_name" {
+    description = "Project name for resource naming"
+    type    = string
 }
+variable "location" {
+  description = "Which Azure location to build in"
+  default     = "uksouth"
+}
+
+variable "default_tags" {
+    description = "Default tags for resources"
+    type    = map(string)
+    default = {}
+}
+
+# Local variables
 
 # Local variables
 locals {
   tags = merge(
     {
-      "module" = "database"
+      "module" = "inputs"
     },
-    module.common.tags,
+    var.default_tags,
   )
-  db_name = "psql-${module.common.project_name}-database"
+  db_name = "psql-${var.project_name}-database"
 }

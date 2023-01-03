@@ -16,10 +16,19 @@ variable "secret_permissions" {
   type        = list(string)
   default     = ["set", "delete", "get", "list"]
 }
+variable "project_name" {
+    description = "Project name for resource naming"
+    type    = string
+}
+variable "location" {
+  description = "Which Azure location to build in"
+  default     = "uksouth"
+}
 
-# Load common module
-module "common" {
-  source = "../common"
+variable "default_tags" {
+    description = "Default tags for resources"
+    type    = map(string)
+    default = {}
 }
 
 # Local variables
@@ -28,6 +37,6 @@ locals {
     {
       "module" = "secrets"
     },
-    module.common.tags,
+    var.default_tags,
   )
 }

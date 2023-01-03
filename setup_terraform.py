@@ -39,11 +39,32 @@ def main():
         help="List of CIDRs that users will connect from.",
     )
     parser.add_argument(
+        "-rg",
+        "--azure-resource-group-name",
+        type=str,
+        default="rg-icenetetl-terraform",
+        help="Name of the Azure resource group",
+    )
+    parser.add_argument(
         "-s",
         "--azure-subscription-name",
         type=str,
         default="IceNet",
         help="Name of the Azure subscription being used.",
+    )
+    parser.add_argument(
+        "-sa",
+        "--azure-storage-account-name",
+        type=str,
+        default="sticenetetlterraform",
+        help="Name of the Azure storage account",
+    )
+    parser.add_argument(
+        "-sc",
+        "--azure-storage-container-name",
+        type=str,
+        default="blob-icenetetl-terraform",
+        help="Name of the Azure storage container",
     )
     parser.add_argument(
         "-v",
@@ -67,14 +88,9 @@ def main():
         "project": "IceNet",
         "component": "ETL",
     }
-    # Load variables from backend.tf
-    with open(os.path.join("terraform", "backend.tf"), "r") as f_in:
-        config = hcl.load(f_in)
-    resource_group_name = "rg-icenetetl-terraform"
-    storage_account_name = config["terraform"]["backend"]["azurerm"][
-        "storage_account_name"
-    ]
-    storage_container_name = config["terraform"]["backend"]["azurerm"]["container_name"]
+    resource_group_name = args.azure_resource_group_name
+    storage_account_name = args.azure_storage_account_name
+    storage_container_name = args.azure_storage_container_name
 
     # Get a common Azure information
     credential = InteractiveBrowserCredential()

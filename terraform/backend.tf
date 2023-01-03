@@ -8,10 +8,12 @@ terraform {
       source  = "hashicorp/random"
       version = "=3.1.0"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 2.7.0"
+    }
   }
   backend "azurerm" {
-    container_name       = "blob-icenetetl-terraform"
     key                  = "terraform.tfstate"
-    storage_account_name = "sticenetetlterraform"
   }
 }

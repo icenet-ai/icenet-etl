@@ -1,7 +1,7 @@
 # Create the PostgreSQL server
 resource "azurerm_postgresql_server" "this" {
-  name                = "psql-${module.common.project_name}-database"
-  location            = module.common.location
+  name                = "psql-${var.project_name}-database"
+  location            = var.location
   resource_group_name = var.resource_group_name
   sku_name            = join("_", ["GP", "Gen5", var.postgres_cores])
 
@@ -9,6 +9,7 @@ resource "azurerm_postgresql_server" "this" {
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
+  # public_network_access_enabled = false
 
   administrator_login              = azurerm_key_vault_secret.db_admin_username.value
   administrator_login_password     = azurerm_key_vault_secret.db_admin_password.value
@@ -50,6 +51,8 @@ resource "azurerm_postgresql_firewall_rule" "user_rules" {
 }
 
 # This toggles the "Allow access to Azure services" switch
+# This is a very wide attack surface as it allows anything within the Azure Boundary
+# and with public access could produce issues. (TODO: remove with local network ranges)
 resource "azurerm_postgresql_firewall_rule" "azure_rule" {
   name                = "AllowAzureServices"
   resource_group_name = var.resource_group_name
