@@ -1,6 +1,10 @@
 variable "resource_group_name" {
   type        = string
-  description = "Resource group of the storage account"
+  description = "Resource group of ETL resources"
+}
+variable "storage_resource_group_name" {
+  type        = string
+  description = "Storage resource group name"
 }
 variable "project_name" {
     description = "Project name for resource naming"
@@ -9,6 +13,11 @@ variable "project_name" {
 variable "location" {
   description = "Which Azure location to build in"
   default     = "uksouth"
+}
+
+variable "storage_id" {
+    description = "Storage resource ID for data arrival topic"
+    type    = string
 }
 
 variable "default_tags" {
@@ -21,7 +30,7 @@ variable "default_tags" {
 locals {
   tags = merge(
     {
-      "module" = "inputs"
+      "module" = "outputs"
     },
     var.default_tags,
   )

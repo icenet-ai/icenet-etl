@@ -58,7 +58,9 @@ module "events" {
   source                       = "./events"
   
   resource_group_name          = module.processing.rg_name
+  storage_resource_group_name  = module.data.rg_name
   location                     = var.location
   project_name                 = local.project_name
   default_tags                 = local.tags
+  storage_id                   = module.data.storage_account.id
 }
