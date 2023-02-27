@@ -122,6 +122,7 @@ def main():
         args.azure_group_id,
         user_ip_address_dict,
         storage_key,
+        args.environment
     )
 
 
