@@ -22,6 +22,12 @@ def main():
         description="Initialise the Azure infrastructure needed by Terraform"
     )
     parser.add_argument(
+        "-e",
+        "--environment",
+        default="dev",
+        help="Environment name to create, will be used to identify ALL resources (make it short)"
+    )
+    parser.add_argument(
         "-g",
         "--azure-group-id",
         type=str,
@@ -145,7 +151,7 @@ def get_azure_ids(credential, subscription_name):
 
 
 def write_terraform_configs(
-    subscription_id, tenant_id, group_id, user_ip_addresses, storage_key
+    subscription_id, tenant_id, group_id, user_ip_addresses, storage_key, environment
 ):
     """Write Terraform config files"""
     # Backend secrets
@@ -166,6 +172,7 @@ def write_terraform_configs(
         "tenant_id": tenant_id,
         "developers_group_id": group_id,
         "users_ip_addresses": user_ip_addresses,
+        "environment": environment,
     }
     with open(azure_secrets_path, "w") as f_out:
         for key, value in azure_vars.items():
