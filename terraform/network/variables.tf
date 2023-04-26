@@ -11,11 +11,6 @@ variable "default_tags" {
     type    = map(string)
     default = {}
 }
-variable "subnet" {
-    description = "Subnet to deploy in"
-    type = string
-}
-
 # Local variables
 locals {
   tags = merge(

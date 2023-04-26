@@ -33,6 +33,10 @@ variable "location" {
   description = "Which Azure location to build in"
   default     = "uksouth"
 }
+variable "subnet" {
+    description = "Subnet to deploy in"
+    type = string
+}
 
 variable "default_tags" {
     description = "Default tags for resources"
@@ -57,4 +61,3 @@ locals {
   app_sku_category = "ElasticPremium"
   app_sku          = "EP1"
 }
-

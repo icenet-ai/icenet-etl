@@ -9,7 +9,7 @@ resource "azurerm_postgresql_server" "this" {
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
-  # public_network_access_enabled = false
+  public_network_access_enabled = false
 
   administrator_login              = azurerm_key_vault_secret.db_admin_username.value
   administrator_login_password     = azurerm_key_vault_secret.db_admin_password.value
@@ -21,6 +21,14 @@ resource "azurerm_postgresql_server" "this" {
     ignore_changes = [storage_mb]
   }
   tags = local.tags
+}
+
+resource "azurerm_postgresql_virtual_network_rule" "example" {
+  name                                 = "psql-${var.project_name}-db-vnet-rule"
+  resource_group_name                  = var.resource_group_name
+  server_name                          = azurerm_postgresql_server.this.name
+  subnet_id                            = var.subnet
+  ignore_missing_vnet_service_endpoint = true
 }
 
 resource "azurerm_postgresql_database" "this" {
@@ -38,25 +46,4 @@ resource "azurerm_postgresql_configuration" "this" {
   resource_group_name = var.resource_group_name
   server_name         = azurerm_postgresql_server.this.name
   value               = each.value
-}
-
-# Firewall rules
-resource "azurerm_postgresql_firewall_rule" "user_rules" {
-  for_each            = { for name, cidr_block in var.allowed_cidrs : name => cidr_block }
-  name                = "AllowConnectionsFrom${each.key}"
-  resource_group_name = var.resource_group_name
-  server_name         = azurerm_postgresql_server.this.name
-  start_ip_address    = cidrhost(each.value, 0)
-  end_ip_address      = cidrhost(each.value, -1)
-}
-
-# This toggles the "Allow access to Azure services" switch
-# This is a very wide attack surface as it allows anything within the Azure Boundary
-# and with public access could produce issues. (TODO: remove with local network ranges)
-resource "azurerm_postgresql_firewall_rule" "azure_rule" {
-  name                = "AllowAzureServices"
-  resource_group_name = var.resource_group_name
-  server_name         = azurerm_postgresql_server.this.name
-  start_ip_address    = "0.0.0.0"
-  end_ip_address      = "0.0.0.0"
 }

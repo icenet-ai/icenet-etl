@@ -1,7 +1,3 @@
-variable "allowed_cidrs" {
-  type        = map(string)
-  description = "List of CIDRs that users can connect from"
-}
 variable "database_names" {
   description = "List of database names"
   type        = list(string)
@@ -46,6 +42,10 @@ variable "project_name" {
 variable "location" {
   description = "Which Azure location to build in"
   default     = "uksouth"
+}
+variable "subnet" {
+    description = "Subnet to deploy in"
+    type = string
 }
 
 variable "default_tags" {

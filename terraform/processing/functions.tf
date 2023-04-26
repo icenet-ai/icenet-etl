@@ -24,6 +24,15 @@ resource "azurerm_storage_account" "this" {
   account_replication_type = "LRS"
   tags                     = local.tags
 }
+resource "azurerm_storage_account_network_rules" "this" {
+  storage_account_name       = azurerm_storage_account.this.name
+  resource_group_name        = azurerm_resource_group.this.name
+
+  default_action             = "Allow"
+  ip_rules                   = []
+  virtual_network_subnet_ids = [var.subnet]
+  bypass                     = []
+}
 
 # Storage container for deploying functions
 resource "azurerm_storage_container" "this" {
@@ -64,6 +73,9 @@ resource "azurerm_function_app" "this" {
     elastic_instance_minimum  = 1
     linux_fx_version          = "Python|3.9"
     use_32_bit_worker_process = false
+    ip_restriction {
+      virtual_network_subnet_id  = var.subnet
+    }
   }
   app_settings = {
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = "${azurerm_application_insights.this.instrumentation_key}"

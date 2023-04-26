@@ -22,3 +22,13 @@ resource "azurerm_storage_container" "this" {
   storage_account_name  = azurerm_storage_account.this.name
   container_access_type = "private"
 }
+
+resource "azurerm_storage_account_network_rules" "this" {
+  storage_account_name     = azurerm_storage_account.this.name
+  resource_group_name      = azurerm_resource_group.this.name
+
+  default_action             = "Allow"
+  ip_rules                   = []
+  virtual_network_subnet_ids = [var.subnet]
+  bypass                     = []
+}
