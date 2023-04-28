@@ -1,3 +1,5 @@
+## https://learn.microsoft.com/en-us/azure/app-service/overview-vnet-integration
+
 # Create the resource group
 resource "azurerm_resource_group" "this" {
   name     = "rg-${var.project_name}-processing"

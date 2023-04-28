@@ -1,6 +1,6 @@
 # Create the resource group
 resource "azurerm_resource_group" "this" {
-  name     = "rg-${var.project_name}-data"
+  name     = "rg-${var.project_name}-storage"
   location = var.location
   tags     = local.tags
 }
@@ -24,11 +24,11 @@ resource "azurerm_storage_container" "this" {
 }
 
 resource "azurerm_storage_account_network_rules" "this" {
-  storage_account_name     = azurerm_storage_account.this.name
-  resource_group_name      = azurerm_resource_group.this.name
+  storage_account_id       = azurerm_storage_account.this.id
 
   default_action             = "Allow"
-  ip_rules                   = []
+
+  ip_rules                   = values(var.users_ip_addresses)
   virtual_network_subnet_ids = [var.subnet]
-  bypass                     = []
+  bypass                     = ["None"]
 }
