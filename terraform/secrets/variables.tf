@@ -9,12 +9,12 @@ variable "tenant_id" {
 variable "key_permissions" {
   description = "Default permissions for keys"
   type        = list(string)
-  default     = ["create", "delete", "get", "list"]
+  default     = ["create", "delete", "get", "list", "recover", "restore"]
 }
 variable "secret_permissions" {
   description = "Default permissions for secrets"
   type        = list(string)
-  default     = ["set", "delete", "get", "list"]
+  default     = ["set", "delete", "get", "list", "recover", "restore"]
 }
 variable "project_name" {
     description = "Project name for resource naming"

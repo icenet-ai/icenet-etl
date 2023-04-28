@@ -49,7 +49,10 @@ resource "azurerm_subnet" "public" {
   name           = "rg-${var.project_name}-public-subnet"
   resource_group_name  = azurerm_resource_group.this.name
   virtual_network_name = azurerm_virtual_network.this.name
-  address_prefixes     = ["172.16.1.0/16"]
+  enforce_private_link_endpoint_network_policies = "false"
+  address_prefixes     = ["172.16.0.0/20"]
+
+  service_endpoints = ["Microsoft.Storage"]
 }
 
 resource "azurerm_subnet_network_security_group_association" "example" {
@@ -61,7 +64,10 @@ resource "azurerm_subnet" "private" {
   name                 = "rg-${var.project_name}-private-subnet"
   resource_group_name  = azurerm_resource_group.this.name
   virtual_network_name = azurerm_virtual_network.this.name
-  address_prefixes     = ["172.16.2.0/16"]
+  enforce_private_link_endpoint_network_policies = "false"
+  address_prefixes     = ["172.16.128.0/20"]
+
+  service_endpoints = ["Microsoft.Storage"]
 }
 
 resource "azurerm_subnet_network_security_group_association" "private" {

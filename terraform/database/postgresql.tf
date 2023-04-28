@@ -9,7 +9,8 @@ resource "azurerm_postgresql_server" "this" {
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
-  public_network_access_enabled = false
+  # FIXME:
+  public_network_access_enabled = true
 
   administrator_login              = azurerm_key_vault_secret.db_admin_username.value
   administrator_login_password     = azurerm_key_vault_secret.db_admin_password.value
@@ -23,7 +24,7 @@ resource "azurerm_postgresql_server" "this" {
   tags = local.tags
 }
 
-resource "azurerm_postgresql_virtual_network_rule" "example" {
+resource "azurerm_postgresql_virtual_network_rule" "this" {
   name                                 = "psql-${var.project_name}-db-vnet-rule"
   resource_group_name                  = var.resource_group_name
   server_name                          = azurerm_postgresql_server.this.name
