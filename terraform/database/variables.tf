@@ -1,3 +1,12 @@
+variable "project_name" {
+    description = "Project name for resource naming"
+    type    = string
+}
+variable "location" {
+  description = "Which Azure location to build in"
+  default     = "uksouth"
+}
+
 variable "database_names" {
   description = "List of database names"
   type        = list(string)
@@ -35,17 +44,13 @@ variable "resource_group_name" {
   type        = string
   description = "Resource group of the storage account"
 }
-variable "project_name" {
-    description = "Project name for resource naming"
-    type    = string
-}
-variable "location" {
-  description = "Which Azure location to build in"
-  default     = "uksouth"
-}
 variable "subnet" {
     description = "Subnet to deploy in"
     type = string
+}
+variable "users_ip_addresses" {
+  type        = map(string)
+  description = "List of CIDRs that users can connect from"
 }
 
 variable "default_tags" {

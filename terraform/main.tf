@@ -4,6 +4,7 @@ module "network" {
   location            = var.location
   project_name        = local.project_name
   default_tags        = local.tags
+  users_ip_addresses  = var.users_ip_addresses
 }
 
 # Secrets module

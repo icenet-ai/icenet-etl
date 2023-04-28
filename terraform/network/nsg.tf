@@ -20,22 +20,18 @@ resource "azurerm_subnet_network_security_group_association" "private" {
   network_security_group_id = azurerm_network_security_group.private.id
 }
 
-
-
-
-
 # Firewall rules
-#resource "azurerm_network_security_rule" "net_rules" {
-#  for_each            = { for name, cidr_block in var.allowed_cidrs : name => cidr_block }
-#  name                = "AllowConnectionsFrom${each.key}"
-#  priority                    = 100
-#  direction                   = "Outbound"
-#  access                      = "Allow"
-#  protocol                    = "TCP"
-#  source_port_range           = "*"
-#  destination_port_range      = "*"
-#  source_address_prefix       = cidrhost(each.value, 0)
-#  destination_address_prefix  = cidrhost(each.value, -1)
-#  resource_group_name = var.resource_group_name
-#  network_security_group_name = azurerm_network_security_group.example.name
-#}
+resource "azurerm_network_security_rule" "net_rules" {
+  for_each                    = { for name, cidr_block in var.users_ip_addresses : name => cidr_block }
+  name                        = "AllowConnectionsFrom${each.key}"
+  priority                    = index(values(var.users_ip_addresses), each.value) + 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = each.value
+  destination_address_prefix  = "VirtualNetwork"
+  resource_group_name         = azurerm_resource_group.this.name
+  network_security_group_name = azurerm_network_security_group.public.name
+}
