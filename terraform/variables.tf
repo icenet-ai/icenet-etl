@@ -33,7 +33,6 @@ variable "project_prefix" {
 
 # Local variables
 locals {
-  database_names = ["icenet"]
   project_name   = "${var.project_prefix}${var.environment}"
   tags = {
     "deployed_by" : "Terraform"

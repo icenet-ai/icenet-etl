@@ -18,27 +18,37 @@ module "secrets" {
 }
 
 # Data storage
-module "storage" {
-  source = "./storage"
+module "data" {
+  source = "./data"
   default_tags        = local.tags
   location            = var.location
   project_name        = local.project_name
-  subnet              = module.network.public_subnet_id
-  users_ip_addresses  = var.users_ip_addresses
+  private_subnet      = module.network.private_subnet_id
+  public_subnet       = module.network.public_subnet_id
+  storage_mb          = 8192
+  key_vault_id        = module.secrets.key_vault_id  
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Database module
 #module "database" {
-#  source               = "./database"
-#  resource_group_name  = module.data.rg_name
-#  location             = var.location
-#  project_name         = local.project_name
-#  storage_mb           = 8192
-#  key_vault_id         = module.secrets.key_vault_id
-#  logging_workspace_id = module.logging.logging_workspace_id
-#  database_names       = local.database_names
-#  default_tags         = local.tags
-#  subnet               = module.network.public_subnet
+
 #}
 
 # NetCDF processing

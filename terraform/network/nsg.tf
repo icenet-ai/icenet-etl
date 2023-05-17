@@ -1,3 +1,9 @@
+resource "azurerm_network_security_group" "gateway" {
+  name                = "nsg-${var.project_name}-gateway"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+}
+
 resource "azurerm_network_security_group" "public" {
   name                = "nsg-${var.project_name}-public"
   location            = azurerm_resource_group.this.location
@@ -8,6 +14,11 @@ resource "azurerm_network_security_group" "private" {
   name                = "nsg-${var.project_name}-private"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
+}
+
+resource "azurerm_subnet_network_security_group_association" "gateway" {
+  subnet_id                 = azurerm_subnet.gateway.id
+  network_security_group_id = azurerm_network_security_group.gateway.id
 }
 
 resource "azurerm_subnet_network_security_group_association" "public" {
@@ -33,5 +44,5 @@ resource "azurerm_network_security_rule" "net_rules" {
   source_address_prefix       = each.value
   destination_address_prefix  = "VirtualNetwork"
   resource_group_name         = azurerm_resource_group.this.name
-  network_security_group_name = azurerm_network_security_group.public.name
+  network_security_group_name = azurerm_network_security_group.gateway.name
 }
