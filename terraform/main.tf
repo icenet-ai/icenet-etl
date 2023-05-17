@@ -26,7 +26,7 @@ module "data" {
   private_subnet      = module.network.private_subnet_id
   public_subnet       = module.network.public_subnet_id
   storage_mb          = 8192
-  key_vault_id        = module.secrets.key_vault_id  
+  key_vault_id        = module.secrets.key_vault_id
 }
 
 

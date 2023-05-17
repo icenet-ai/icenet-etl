@@ -31,3 +31,5 @@ azfunctions/local.settings.json
 
 # venvs for python
 /venv/
+
+**/_old
