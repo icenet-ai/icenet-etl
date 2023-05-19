@@ -70,6 +70,8 @@ resource "azurerm_linux_function_app" "this" {
   site_config {
     elastic_instance_minimum  = 1
     use_32_bit_worker         = false
+    application_insights_connection_string = "InstrumentationKey=${azurerm_application_insights.this.instrumentation_key}"
+    application_insights_key  = "${azurerm_application_insights.this.instrumentation_key}"
     application_stack {
       python_version = "3.9"
     }
@@ -78,8 +80,6 @@ resource "azurerm_linux_function_app" "this" {
     }
   }
   app_settings = {
-    "APPINSIGHTS_INSTRUMENTATIONKEY"        = "${azurerm_application_insights.this.instrumentation_key}"
-    "APPLICATIONINSIGHTS_CONNECTION_STRING" = "InstrumentationKey=${azurerm_application_insights.this.instrumentation_key}"
     "BUILD_FLAGS"                           = "UseExpressBuild"
     "ENABLE_ORYX_BUILD"                     = "true"
     "FUNCTIONS_WORKER_RUNTIME"              = "python"

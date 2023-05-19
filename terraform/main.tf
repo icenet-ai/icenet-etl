@@ -32,8 +32,8 @@ module "data" {
 # NetCDF processing
 module "processing" {
   source                       = "./processing"
-  data_storage_account         = module.data.storage_account
-  database_resource_group_name = module.data.resource_group
+  data_storage_account         = module.data.inputs_storage_account
+  database_resource_group_name = module.data.resource_group.name
   database_fqdn                = module.data.server_fqdn
   database_host                = module.data.server_name
   database_name                = module.data.database_names[0]
@@ -46,17 +46,17 @@ module "processing" {
 }
 
 ##
-# Linkages, quite likely should always be at the end of the run
+# Downstream processing elements, quite likely should always be at the end of the run
 #
 
-# Event grid topics for integrations
-module "events" {
-  source                       = "./events"
-
-  processing_resource_group_name = module.processing.resource_group
-  storage_resource_group_name  = module.data.resource_group
+# Forecast event processing and event grid subs
+module "forecast_processor" {
+  source                       = "./forecast_processor"
   location                     = var.location
   project_name                 = local.project_name
   default_tags                 = local.tags
-  input_storage_account_id     = module.data.storage_account.id
+  input_storage_account        = module.data.inputs_storage_account
+  input_storage_resource_group = module.data.resource_group
+  processing_storage_account   = module.data.processors_storage_account
+  subnet                       = module.network.private_subnet_id
 }
