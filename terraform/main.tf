@@ -45,32 +45,18 @@ module "processing" {
   subnet                       = module.network.private_subnet_id
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+##
+# Linkages, quite likely should always be at the end of the run
+#
 
 # Event grid topics for integrations
-#module "events" {
-#  source                       = "./events"
+module "events" {
+  source                       = "./events"
 
-#  resource_group_name          = module.processing.rg_name
-#  storage_resource_group_name  = module.storage.rg_name
-#  location                     = var.location
-#  project_name                 = local.project_name
-#  default_tags                 = local.tags
-#  storage_id                   = module.storage.storage_account.id
-#}
+  processing_resource_group_name = module.processing.resource_group
+  storage_resource_group_name  = module.data.resource_group
+  location                     = var.location
+  project_name                 = local.project_name
+  default_tags                 = local.tags
+  input_storage_account_id     = module.data.storage_account.id
+}
