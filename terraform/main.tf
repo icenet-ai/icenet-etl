@@ -29,43 +29,38 @@ module "data" {
   key_vault_id        = module.secrets.key_vault_id
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Database module
-#module "database" {
-
-#}
-
 # NetCDF processing
-#module "processing" {
-#  source                       = "./processing"
-#  data_storage_account         = module.data.storage_account
-#  database_resource_group_name = module.data.rg_name
-#  database_fqdn                = module.database.server_fqdn
-#  database_host                = module.database.server_name
-#  database_name                = local.database_names[0]
-#  database_user                = module.database.admin_username
-#  database_password            = module.database.admin_password
-#  location                     = var.location
-#  project_name                 = local.project_name
-#  default_tags                 = local.tags
-#  subnet                       = module.network.private_subnet
-#}
+module "processing" {
+  source                       = "./processing"
+  data_storage_account         = module.data.storage_account
+  database_resource_group_name = module.data.resource_group
+  database_fqdn                = module.data.server_fqdn
+  database_host                = module.data.server_name
+  database_name                = module.data.database_names[0]
+  database_user                = module.data.admin_username
+  database_password            = module.data.admin_password
+  location                     = var.location
+  project_name                 = local.project_name
+  default_tags                 = local.tags
+  subnet                       = module.network.private_subnet_id
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # Event grid topics for integrations
