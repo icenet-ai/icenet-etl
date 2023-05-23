@@ -32,7 +32,7 @@ resource "azurerm_subnet_network_security_group_association" "private" {
 }
 
 # Firewall rules
-resource "azurerm_network_security_rule" "net_rules" {
+resource "azurerm_network_security_rule" "gateway_net_rules" {
   for_each                    = { for name, cidr_block in var.users_ip_addresses : name => cidr_block }
   name                        = "AllowConnectionsFrom${each.key}"
   priority                    = index(values(var.users_ip_addresses), each.value) + 100
@@ -45,4 +45,34 @@ resource "azurerm_network_security_rule" "net_rules" {
   destination_address_prefix  = "VirtualNetwork"
   resource_group_name         = azurerm_resource_group.this.name
   network_security_group_name = azurerm_network_security_group.gateway.name
+}
+
+resource "azurerm_network_security_rule" "public_net_rules" {
+  for_each                    = { for name, cidr_block in var.users_ip_addresses : name => cidr_block }
+  name                        = "AllowConnectionsFrom${each.key}"
+  priority                    = index(values(var.users_ip_addresses), each.value) + 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = each.value
+  destination_address_prefix  = "VirtualNetwork"
+  resource_group_name         = azurerm_resource_group.this.name
+  network_security_group_name = azurerm_network_security_group.public.name
+}
+
+resource "azurerm_network_security_rule" "private_net_rules" {
+  for_each                    = { for name, cidr_block in var.users_ip_addresses : name => cidr_block }
+  name                        = "AllowConnectionsFrom${each.key}"
+  priority                    = index(values(var.users_ip_addresses), each.value) + 100
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "*"
+  source_address_prefix       = each.value
+  destination_address_prefix  = "VirtualNetwork"
+  resource_group_name         = azurerm_resource_group.this.name
+  network_security_group_name = azurerm_network_security_group.private.name
 }
