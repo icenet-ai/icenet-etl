@@ -17,8 +17,8 @@ variable "input_storage_resource_group" {
   description = "Input storage account resource group"
 }
 
-variable "subnet" {
-    description = "Subnet to deploy in"
+variable "subnet_id" {
+    description = "Subnet ID to deploy in"
     type = string
 }
 

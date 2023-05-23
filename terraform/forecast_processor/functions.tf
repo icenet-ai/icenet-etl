@@ -55,7 +55,7 @@ resource "azurerm_linux_function_app" "this" {
       }
     }
     ip_restriction {
-      virtual_network_subnet_id = var.subnet
+      virtual_network_subnet_id = var.subnet_id
     }
   }
   app_settings = {

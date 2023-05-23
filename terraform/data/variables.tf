@@ -6,11 +6,11 @@ variable "location" {
   description = "Which Azure location to build in"
   default     = "uksouth"
 }
-variable "public_subnet" {
+variable "public_subnet_id" {
     description = "Public subnet ID to deploy in"
     type = string
 }
-variable "private_subnet" {
+variable "private_subnet_id" {
     description = "Private subnet ID to deploy in"
     type = string
 }

@@ -23,8 +23,8 @@ module "data" {
   default_tags        = local.tags
   location            = var.location
   project_name        = local.project_name
-  private_subnet      = module.network.private_subnet_id
-  public_subnet       = module.network.public_subnet_id
+  private_subnet_id   = module.network.private_subnet.id
+  public_subnet_id    = module.network.public_subnet.id
   storage_mb          = 8192
   key_vault_id        = module.secrets.key_vault_id
 }
@@ -42,7 +42,7 @@ module "processing" {
   location                     = var.location
   project_name                 = local.project_name
   default_tags                 = local.tags
-  subnet                       = module.network.private_subnet_id
+  subnet_id                    = module.network.private_subnet.id
 }
 
 module "web" {
@@ -63,7 +63,8 @@ module "pygeoapi" {
   default_tags                = local.tags
   project_name                = local.project_name
   location                    = var.location
-  subnet                      = module.network.private_subnet_id
+  subnet_id                   = module.network.private_subnet.id
+  dns_zone                    = module.network.dns_zone
   webapps_resource_group      = module.web.resource_group
 }
 
@@ -80,5 +81,5 @@ module "forecast_processor" {
   input_storage_account        = module.data.inputs_storage_account
   input_storage_resource_group = module.data.resource_group
   processing_storage_account   = module.data.processors_storage_account
-  subnet                       = module.network.private_subnet_id
+  subnet_id                    = module.network.private_subnet.id
 }

@@ -35,8 +35,8 @@ variable "database_resource_group_name" {
   description = "Resource group of the storage account"
 }
 
-variable "subnet" {
-    description = "Subnet to deploy in"
+variable "subnet_id" {
+    description = "Subnet ID to deploy in"
     type = string
 }
 

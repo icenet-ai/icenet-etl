@@ -41,5 +41,12 @@ resource "azurerm_subnet" "private" {
   virtual_network_name  = azurerm_virtual_network.vnet.name
 
   address_prefixes  = ["172.16.128.0/20"]
-  service_endpoints = ["Microsoft.Storage"]
+  service_endpoints = ["Microsoft.Storage", "Microsoft.Web"]
+
+#  delegation {
+#    name = "delegation"
+#    service_delegation {
+#      name = "Microsoft.Web/serverFarms"
+#    }
+#  }
 }

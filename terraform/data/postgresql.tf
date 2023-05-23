@@ -44,7 +44,7 @@ resource "azurerm_private_endpoint" "this" {
   name                = "psql-${var.project_name}-endpoint"
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
-  subnet_id           = var.public_subnet
+  subnet_id           = var.public_subnet_id
 
   private_service_connection {
     name                           = "psql-${var.project_name}-pvtsvcconn"

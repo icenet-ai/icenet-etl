@@ -33,9 +33,12 @@ variable "pygeoapi_input_port" {
   type        = string
 }
 
-variable "subnet" {
-    description = "Subnet to deploy in"
-    type = string
+variable "dns_zone" {
+  description = "VNet private DNS zone"
+}
+variable "subnet_id" {
+  description = "Subnet ID to deploy in"
+  type = string
 }
 
 variable "default_tags" {

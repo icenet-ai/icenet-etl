@@ -31,7 +31,7 @@ resource "azurerm_storage_account_network_rules" "this" {
 
   default_action             = "Allow"
   ip_rules                   = []
-  virtual_network_subnet_ids = [var.subnet]
+  virtual_network_subnet_ids = [var.subnet_id]
   bypass                     = []
 }
 
@@ -76,7 +76,7 @@ resource "azurerm_linux_function_app" "this" {
       python_version = "3.9"
     }
     ip_restriction {
-      virtual_network_subnet_id = var.subnet
+      virtual_network_subnet_id = var.subnet_id
     }
   }
   app_settings = {
