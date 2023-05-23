@@ -27,6 +27,14 @@ output "admin_password" {
   description = "Password for the PostgreSQL database admin"
   value       = azurerm_key_vault_secret.db_admin_password.value
 }
+output "reader_username" {
+  description = "Username for the PostgreSQL database reader"
+  value       = azurerm_key_vault_secret.db_reader_username.value
+}
+output "reader_password" {
+  description = "Password for the PostgreSQL database reader"
+  value       = azurerm_key_vault_secret.db_reader_password.value
+}
 output "database_names" {
   description = "Database names from PostgreSQL"
   value       = var.database_names

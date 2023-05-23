@@ -45,6 +45,28 @@ module "processing" {
   subnet                       = module.network.private_subnet_id
 }
 
+module "web" {
+  source                      = "./web"
+  default_tags                = local.tags
+  project_name                = local.project_name
+  location                    = var.location
+}
+
+# PyGeoAPI app
+module "pygeoapi" {
+  source                      = "./pygeoapi"
+  postgres_db_name            = module.data.database_names[0]
+  postgres_db_host            = module.data.server_fqdn
+  postgres_db_reader_username = module.data.reader_username
+  postgres_db_reader_password = module.data.reader_password
+  pygeoapi_input_port         = "8000"
+  default_tags                = local.tags
+  project_name                = local.project_name
+  location                    = var.location
+  subnet                      = module.network.private_subnet_id
+  webapps_resource_group      = module.web.resource_group
+}
+
 ##
 # Downstream processing elements, quite likely should always be at the end of the run
 #
