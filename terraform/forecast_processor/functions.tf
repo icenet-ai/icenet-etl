@@ -14,7 +14,7 @@ resource "azurerm_application_insights" "this" {
 }
 
 resource "azurerm_communication_service" "comms" {
-  name                = "${var.project_name}comms"
+  name                = "${var.project_name}-comms"
   resource_group_name = azurerm_resource_group.this.name
   # This cannot be UK due to email being global - US only
   # data_location       = "UK"

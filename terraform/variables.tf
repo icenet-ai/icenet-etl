@@ -37,6 +37,6 @@ locals {
   tags = {
     "deployed_by" : "Terraform"
     "project" :     "IceNet"
-    "component" :   "ETL"
+    "component" :   "${var.project_prefix}${var.environment}"
   }
 }

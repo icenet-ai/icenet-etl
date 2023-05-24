@@ -27,7 +27,7 @@ resource "azurerm_eventgrid_system_topic" "storage" {
 
 
 
-
+# TODO: deploy subs
 #resource "azurerm_eventgrid_system_topic_event_subscription" "data_subs" {
 #  #for_each            = var.data_topics
 #
