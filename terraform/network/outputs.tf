@@ -22,3 +22,7 @@ output "dns_zone" {
   description = "Link to the private DNS zone for this network"
   value       = azurerm_private_dns_zone.this
 }
+output "gateway_ip" {
+  description = "Gateway main IP"
+  value       = azurerm_public_ip.gateway_ip
+}

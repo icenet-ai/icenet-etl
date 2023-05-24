@@ -50,3 +50,11 @@ resource "azurerm_subnet" "private" {
 #    }
 #  }
 }
+
+resource "azurerm_public_ip" "gateway_ip" {
+  name                = "gatewayip"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+}
