@@ -1,7 +1,7 @@
 
 # Service plan that functions belong to
 resource "azurerm_service_plan" "this" {
-  name                = "plan-${var.project_name}-dashboard"
+  name                = "plan-${var.project_name}-assets"
   resource_group_name = var.webapps_resource_group.name
   location            = var.location
 
@@ -17,7 +17,7 @@ resource "azurerm_service_plan" "this" {
 
 # Functions to be deployed
 resource "azurerm_linux_web_app" "this" {
-  name                       = "app-${var.project_name}-dashboard"
+  name                       = "app-${var.project_name}-assets"
   location                   = var.location
   resource_group_name        = var.webapps_resource_group.name
   service_plan_id            = azurerm_service_plan.this.id
@@ -43,7 +43,7 @@ resource "azurerm_linux_web_app" "this" {
 #}
 
 resource "azurerm_private_endpoint" "this" {
-  name                = "dashboardprivateendpoint"
+  name                = "assetsprivateendpoint"
   location            = var.webapps_resource_group.location
   resource_group_name = var.webapps_resource_group.name
   subnet_id           = var.subnet_id

@@ -68,30 +68,15 @@ module "pygeoapi" {
   webapps_resource_group      = module.web.resource_group
 }
 
-# Dasboard application
-module "dashboard" {
-  source                      = "./dashboard"
+# Dashboard and data access application
+module "assets" {
+  source                      = "./assets"
   default_tags                = local.tags
   project_name                = local.project_name
   location                    = var.location
   subnet_id                   = module.network.private_subnet.id
   dns_zone                    = module.network.dns_zone
   webapps_resource_group      = module.web.resource_group
-
-  count = var.deploy_dashboard ? 1 : 0
-}
-
-# Dasboard application
-module "registry" {
-  source                      = "./registry"
-  default_tags                = local.tags
-  project_name                = local.project_name
-  location                    = var.location
-  subnet_id                   = module.network.private_subnet.id
-  dns_zone                    = module.network.dns_zone
-  webapps_resource_group      = module.web.resource_group
-
-  count = var.deploy_registry ? 1 : 0
 }
 
 ##

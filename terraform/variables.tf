@@ -31,18 +31,6 @@ variable "project_prefix" {
   default     = "icenetetl"
 }
 
-variable "deploy_dashboard" {
-  description = "Deploy the icenet-dashboard application"
-  type        = bool
-  default     = true
-}
-
-variable "deploy_registry" {
-  description = "Deploy the icenet-registry application"
-  type        = bool
-  default     = true
-}
-
 # Local variables
 locals {
   project_name   = "${var.project_prefix}${var.environment}"
