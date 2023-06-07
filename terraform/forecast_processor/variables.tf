@@ -16,6 +16,25 @@ variable "input_storage_account" {
 variable "input_storage_resource_group" {
   description = "Input storage account resource group"
 }
+variable "docker_username" {
+  description = "Which Docker username to user"
+  type        = string
+  sensitive   = true
+}
+variable "docker_password" {
+  description = "Which Docker password to password"
+  type        = string
+  sensitive   = true
+}
+variable "notification_email" {
+  description = "Email to send notifications to"
+  type        = string
+}
+variable "sendfrom_email" {
+  description = "Email to use for sending notifications from"
+  type        = string
+  sensitive   = true
+}
 
 variable "subnet_id" {
     description = "Subnet ID to deploy in"

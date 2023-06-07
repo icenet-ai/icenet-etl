@@ -22,6 +22,15 @@ resource "azurerm_communication_service" "comms" {
   tags                = local.tags
 }
 
+resource "azurerm_email_communication_service" "emails" {
+  name                = "${var.project_name}-emails"
+  resource_group_name = azurerm_resource_group.this.name
+  # This cannot be UK due to email being global - US only
+  # data_location       = "UK"
+  data_location       = "United States"
+  tags                = local.tags
+}
+
 # Service plan that functions belong to
 resource "azurerm_service_plan" "this" {
   name                         = "plan-${var.project_name}-evtproc"
@@ -47,11 +56,13 @@ resource "azurerm_linux_function_app" "this" {
     application_insights_connection_string = "InstrumentationKey=${azurerm_application_insights.this.instrumentation_key}"
     application_insights_key  = "${azurerm_application_insights.this.instrumentation_key}"
     application_stack {
-      #python_version = "3.9"
+#      python_version = "3.8"
       docker {
         registry_url            = "registry.hub.docker.com"
+        registry_username       = var.docker_username
+        registry_password       = var.docker_password
         image_name              = "jimcircadian/iceneteventprocessor"
-        image_tag               = "v0.0.2"
+        image_tag               = "latest"
       }
     }
     ip_restriction {
@@ -60,32 +71,12 @@ resource "azurerm_linux_function_app" "this" {
   }
   app_settings = {
     "COMMS_ENDPOINT"                 = azurerm_communication_service.comms.primary_connection_string
-    "BUILD_FLAGS"                    = "UseExpressBuild"
-    "ENABLE_ORYX_BUILD"              = "true"
-    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1"
-    "XDG_CACHE_HOME"                 = "/tmp/.cache"
+    "COMMS_TO_EMAIL"                 = var.notification_email
+    "COMMS_FROM_EMAIL"               = var.sendfrom_email
+    # Must have this for using docker containers, or persistent storage will be
+    # enabled which mounts over the contents of the container.
+    # https://github.com/Azure/azure-functions-docker/issues/642
+    "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }
   tags = local.tags
-}
-
-# Actual function deployment
-resource "null_resource" "functions" {
-  # These define build order
-  depends_on = [azurerm_service_plan.this, azurerm_linux_function_app.this]
-
-  # These will trigger a redeploy
-  triggers = {
-    #always_run = "${timestamp()}"
-  }
-
-  provisioner "local-exec" {
-    command = <<EOF
-    echo "Waiting for other deployments to finish..."
-    sleep 150
-    cd ../azfunctions/forecast-processing
-    echo "Deploying functions from $(pwd)"
-    func azure functionapp publish ${local.app_name} --python
-    cd -
-    EOF
-  }
 }

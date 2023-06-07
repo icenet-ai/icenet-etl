@@ -93,4 +93,8 @@ module "forecast_processor" {
   input_storage_resource_group = module.data.resource_group
   processing_storage_account   = module.data.processors_storage_account
   subnet_id                    = module.network.private_subnet.id
+  docker_username              = var.docker_username
+  docker_password              = var.docker_password
+  notification_email           = var.notification_email
+  sendfrom_email               = var.sendfrom_email
 }

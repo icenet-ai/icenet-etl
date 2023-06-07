@@ -7,3 +7,4 @@ azure-communication-email
 icenet
 # Stop pip going off on a search for appropriate versions
 tensorflow==2.9.1
+urllib3<=2.0.0
