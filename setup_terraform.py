@@ -79,6 +79,18 @@ def main():
         default=0,
         help="Verbosity level: each '-v' will increase logging level by one step (default is WARNING).",
     )
+    parser.add_argument(
+        "docker_username",
+        help="Login for pulling docker images from Docker Hub"
+    )
+    parser.add_argument(
+        "docker_password",
+        help="Login for pulling docker images from Docker Hub"
+    )
+    parser.add_argument(
+        "notification_email",
+        help="Email for sending notifications"
+    )
     args = parser.parse_args()
     user_ip_address_dict = {
         item.split("=")[0]: item.split("=")[1] for item in args.user_ip_addresses
@@ -122,7 +134,10 @@ def main():
         args.azure_group_id,
         user_ip_address_dict,
         storage_key,
-        args.environment
+        args.environment,
+        args.docker_username,
+        args.docker_password,
+        args.notification_email
     )
 
 
@@ -152,7 +167,7 @@ def get_azure_ids(credential, subscription_name):
 
 
 def write_terraform_configs(
-    subscription_id, tenant_id, group_id, user_ip_addresses, storage_key, environment
+    subscription_id, tenant_id, group_id, user_ip_addresses, storage_key, environment, **kwargs
 ):
     """Write Terraform config files"""
     # Backend secrets
@@ -174,6 +189,7 @@ def write_terraform_configs(
         "developers_group_id": group_id,
         "users_ip_addresses": user_ip_addresses,
         "environment": environment,
+        **kwargs
     }
     with open(azure_secrets_path, "w") as f_out:
         for key, value in azure_vars.items():

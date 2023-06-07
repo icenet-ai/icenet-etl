@@ -40,3 +40,5 @@ icenetgeoapi/pygeoapi-openapi.yml
 icenetgeoapi/pygeoapi.yml
 terraform/icenetgeoapi.zip
 
+__pycache__/
+*.pyc
