@@ -4,7 +4,9 @@
 
 azure-functions
 azure-communication-email
-icenet
+# We need to solve icenet#48 for easier docker builds
+# icenet
+git+https://github.com/icenet-ai/icenet@0.2.4_dev
 # Stop pip going off on a search for appropriate versions
 tensorflow==2.9.1
 urllib3<=2.0.0
