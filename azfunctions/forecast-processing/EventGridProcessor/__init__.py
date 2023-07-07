@@ -77,7 +77,13 @@ def send_email(from_addr, to_addr, subject, message):
         logging.exception(ex)
 
 if __name__ == "__main__":
+    import sys
+    
+    if len(sys.argv) != 3:
+        print("Usage: {} from_addr to_addr".format(sys.argv[0]))
+        sys.exit(1)
+
     message = "TEST: {}".format("no_file.nc")
-    from_addr = "DoNotReply@f246be03-b956-4ce0-af11-bda87251aa8c.azurecomm.net"
-    to_addr = "jambyr@bas.ac.uk"
+    from_addr = sys.argv[1]
+    to_addr = sys.argv[2]
     send_email(from_addr, to_addr, "no_file.nc", message)
