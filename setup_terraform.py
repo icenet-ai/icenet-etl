@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 import argparse
 import coloredlogs
+import getpass
 import hcl
 import logging
 import os
@@ -84,10 +85,6 @@ def main():
         help="Login for pulling docker images from Docker Hub"
     )
     parser.add_argument(
-        "docker_password",
-        help="Login for pulling docker images from Docker Hub"
-    )
-    parser.add_argument(
         "notification_email",
         help="Email for sending notifications"
     )
@@ -99,6 +96,9 @@ def main():
     # Configure logging, increasing verbosity by one level for each 'v'
     verbosity = max(logging.WARNING - (10 * args.verbose), 0)
     coloredlogs.install(fmt="%(asctime)s %(levelname)8s: %(message)s", level=verbosity)
+    
+    logging.warning("We'll need a password for docker username {}".format(args.docker_username))
+    docker_password = getpass.getpass()
 
     # Set Terraform variables
     tags = {
@@ -135,9 +135,9 @@ def main():
         user_ip_address_dict,
         storage_key,
         args.environment,
-        args.docker_username,
-        args.docker_password,
-        args.notification_email
+        docker_username=args.docker_username,
+        docker_password=docker_password,
+        notification_email=args.notification_email
     )
 
 
@@ -145,6 +145,7 @@ def get_azure_ids(credential, subscription_name):
     """Get subscription and tenant IDs"""
     # Connect to Azure clients
     subscription_client = SubscriptionClient(credential=credential)
+    logging.debug("DEBUG: {}".format(subscription_client))
 
     # Check that the Azure credentials are valid
     try:
