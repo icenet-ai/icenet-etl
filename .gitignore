@@ -42,3 +42,4 @@ terraform/icenetgeoapi.zip
 
 __pycache__/
 *.pyc
+local.settings.json

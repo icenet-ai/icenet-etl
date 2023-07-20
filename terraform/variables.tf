@@ -43,11 +43,13 @@ variable "docker_password" {
 variable "notification_email" {
   description = "Email to send notifications to"
   type        = string
+  default     = "test@example.com"
 }
 variable "sendfrom_email" {
   description = "Email to use for sending notifications from"
   type        = string
   sensitive   = true
+  default     = "test@example.com"
 }
 
 # Local variables

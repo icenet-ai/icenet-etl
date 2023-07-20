@@ -6,6 +6,9 @@ variable "location" {
   description = "Which Azure location to build in"
   default     = "uksouth"
 }
+variable "frontend_ip" {
+  description = "Frontend IP to utilise for load balancer"
+}
 
 variable "default_tags" {
     description = "Default tags for resources"

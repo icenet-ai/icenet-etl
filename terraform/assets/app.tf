@@ -17,7 +17,7 @@ resource "azurerm_service_plan" "this" {
 
 # Functions to be deployed
 resource "azurerm_linux_web_app" "this" {
-  name                       = "app-${var.project_name}-assets"
+  name                       = "web-${var.project_name}-assets"
   location                   = var.location
   resource_group_name        = var.webapps_resource_group.name
   service_plan_id            = azurerm_service_plan.this.id
@@ -36,11 +36,6 @@ resource "azurerm_linux_web_app" "this" {
   app_settings = {}
   tags = local.tags
 }
-
-#resource "azurerm_app_service_virtual_network_swift_connection" "this" {
-#  app_service_id  = azurerm_linux_web_app.this.id
-#  subnet_id       = var.subnet_id
-#}
 
 resource "azurerm_private_endpoint" "this" {
   name                = "assetsprivateendpoint"

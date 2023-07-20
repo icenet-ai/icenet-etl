@@ -4,3 +4,16 @@ resource "azurerm_resource_group" "webapps" {
   location = var.location
   tags     = local.tags
 }
+
+resource "azurerm_lb" "example" {
+  name                = "lb-${var.project_name}-webapps"
+  location            = azurerm_resource_group.webapps.location
+  resource_group_name = azurerm_resource_group.webapps.name
+  sku                 = "Standard"
+  sku_tier            = "Regional"
+
+  frontend_ip_configuration {
+    name                 = "PublicIPAddress"
+    public_ip_address_id = var.frontend_ip.id
+  }
+}

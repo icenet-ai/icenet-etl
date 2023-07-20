@@ -50,6 +50,7 @@ module "web" {
   default_tags                = local.tags
   project_name                = local.project_name
   location                    = var.location
+  frontend_ip                 = module.network.gateway_ip
 }
 
 # PyGeoAPI app

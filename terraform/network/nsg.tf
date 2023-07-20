@@ -47,7 +47,7 @@ resource "azurerm_network_security_rule" "gateway_net_rules" {
   network_security_group_name = azurerm_network_security_group.gateway.name
 }
 
-# FIXME: we should deploy via the gateway services
+# FIXME: we should deploy via the public services
 resource "azurerm_network_security_rule" "public_net_rules" {
   for_each                    = { for name, cidr_block in var.users_ip_addresses : name => cidr_block }
   name                        = "AllowConnectionsFrom${each.key}"
@@ -63,7 +63,7 @@ resource "azurerm_network_security_rule" "public_net_rules" {
   network_security_group_name = azurerm_network_security_group.public.name
 }
 
-# FIXME: we should deploy via the gateway services
+# FIXME: we should deploy via the private services
 resource "azurerm_network_security_rule" "private_net_rules" {
   for_each                    = { for name, cidr_block in var.users_ip_addresses : name => cidr_block }
   name                        = "AllowConnectionsFrom${each.key}"
