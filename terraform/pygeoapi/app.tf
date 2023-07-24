@@ -29,9 +29,10 @@ resource "azurerm_linux_web_app" "this" {
       python_version = "3.9"
     }
     app_command_line = "python run.py"
-    ip_restriction {
-      virtual_network_subnet_id = var.subnet_id
-    }
+# TODO: restrict to internal subnet access only
+#    ip_restriction {
+#      virtual_network_subnet_id = var.subnet_id
+#    }
   }
   app_settings = {
     "POST_BUILD_COMMAND"             = "post_build.sh",
@@ -46,21 +47,22 @@ resource "azurerm_linux_web_app" "this" {
 #  subnet_id       = var.subnet_id
 #}
 
-resource "azurerm_private_endpoint" "this" {
-  name                = "pygeoapiprivateendpoint"
-  location            = var.webapps_resource_group.location
-  resource_group_name = var.webapps_resource_group.name
-  subnet_id           = var.subnet_id
-
-  private_dns_zone_group {
-    name = "privatednszonegroup"
-    private_dns_zone_ids = [var.dns_zone.id]
-  }
-
-  private_service_connection {
-    name = "privateendpointconnection"
-    private_connection_resource_id = azurerm_linux_web_app.this.id
-    subresource_names = ["sites"]
-    is_manual_connection = false
-  }
-}
+# TODO: restrict deployments availability via reliably restricted proxy
+#resource "azurerm_private_endpoint" "this" {
+#  name                = "pygeoapiprivateendpoint"
+#  location            = var.webapps_resource_group.location
+#  resource_group_name = var.webapps_resource_group.name
+#  subnet_id           = var.subnet_id
+#
+#  private_dns_zone_group {
+#    name = "privatednszonegroup"
+#    private_dns_zone_ids = [var.dns_zone.id]
+#  }
+#
+#  private_service_connection {
+#    name = "privateendpointconnection"
+#    private_connection_resource_id = azurerm_linux_web_app.this.id
+#    subresource_names = ["sites"]
+#    is_manual_connection = false
+#  }
+#}
