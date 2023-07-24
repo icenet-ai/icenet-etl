@@ -22,7 +22,7 @@ resource "azurerm_storage_account_network_rules" "inputs_rules" {
   default_action             = "Allow"
 
   virtual_network_subnet_ids = [var.public_subnet_id]
-  bypass                     = ["None"]
+  bypass                     = ["AzureServices"]
 }
 
 # Create the storage account
@@ -49,5 +49,5 @@ resource "azurerm_storage_account_network_rules" "processors_rules" {
   default_action             = "Allow"
   ip_rules                   = []
   virtual_network_subnet_ids = [var.private_subnet_id]
-  bypass                     = []
+  bypass                     = ["AzureServices"]
 }

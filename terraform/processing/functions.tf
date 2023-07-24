@@ -32,7 +32,7 @@ resource "azurerm_storage_account_network_rules" "this" {
   default_action             = "Allow"
   ip_rules                   = []
   virtual_network_subnet_ids = [var.subnet_id]
-  bypass                     = []
+  bypass                     = ["AzureServices"]
 }
 
 # Storage container for deploying functions
