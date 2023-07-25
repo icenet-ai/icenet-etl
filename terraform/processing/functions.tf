@@ -51,9 +51,6 @@ resource "azurerm_service_plan" "this" {
   os_type                      = "Linux"
   maximum_elastic_worker_count = 20
   sku_name                     = local.app_sku
-  lifecycle {
-    ignore_changes = [kind]
-  }
   tags = local.tags
 }
 

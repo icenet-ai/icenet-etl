@@ -9,9 +9,6 @@ resource "azurerm_service_plan" "this" {
   worker_count                 = 1
 
   sku_name                     = local.app_sku
-  lifecycle {
-    ignore_changes = [kind]
-  }
   tags = local.tags
 }
 
