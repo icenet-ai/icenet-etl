@@ -10,6 +10,9 @@ variable "location" {
 variable "processing_storage_account" {
   description = "Storage account for processing data"
 }
+variable "processing_resource_group" {
+  description = "Resource group for processing"
+}
 variable "input_storage_account" {
   description = "Storage account containing inputs"
 }
