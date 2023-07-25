@@ -80,7 +80,7 @@ resources:
           host: {{postgres_host}}
           dbname: {{postgres_dbname}}
           user: {{postgres_reader_username}}@{{postgres_host}}
-          password: {{{postgres_reader_password}}}
+          password: '{{{postgres_reader_password}}}'
           sslmode: require
         id_field: cell_id
         table: north_cell
@@ -113,7 +113,7 @@ resources:
           host: {{postgres_host}}
           dbname: {{postgres_dbname}}
           user: {{postgres_reader_username}}@{{postgres_host}}
-          password: {{{postgres_reader_password}}}
+          password: '{{{postgres_reader_password}}}'
           sslmode: require
         id_field: cell_id
         table: south_cell
@@ -150,7 +150,7 @@ resources:
           host: {{postgres_host}}
           dbname: {{postgres_dbname}}
           user: {{postgres_reader_username}}@{{postgres_host}}
-          password: {{{postgres_reader_password}}}
+          password: '{{{postgres_reader_password}}}'
           sslmode: require
         properties:
           - forecast_id
@@ -194,7 +194,7 @@ resources:
           host: {{postgres_host}}
           dbname: {{postgres_dbname}}
           user: {{postgres_reader_username}}@{{postgres_host}}
-          password: {{{postgres_reader_password}}}
+          password: '{{{postgres_reader_password}}}'
           sslmode: require
         properties:
           - forecast_id
@@ -238,7 +238,7 @@ resources:
           host: {{postgres_host}}
           dbname: {{postgres_dbname}}
           user: {{postgres_reader_username}}@{{postgres_host}}
-          password: {{{postgres_reader_password}}}
+          password: '{{{postgres_reader_password}}}'
           sslmode: require
           foreign_key_table: north_cell
           foreign_key_name: cell_id
@@ -284,7 +284,7 @@ resources:
           host: {{postgres_host}}
           dbname: {{postgres_dbname}}
           user: {{postgres_reader_username}}@{{postgres_host}}
-          password: {{{postgres_reader_password}}}
+          password: '{{{postgres_reader_password}}}'
           sslmode: require
           foreign_key_table: south_cell
           foreign_key_name: cell_id

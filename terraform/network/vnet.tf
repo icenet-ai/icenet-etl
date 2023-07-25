@@ -32,6 +32,15 @@ resource "azurerm_subnet" "public" {
 
   address_prefixes  = ["172.16.16.0/20"]
   service_endpoints = ["Microsoft.Storage"]
+
+  delegation {
+    name = "delegation"
+
+    service_delegation {
+      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
+      name    = "Microsoft.Web/serverFarms"
+    }
+  }
 }
 
 # Resources not accessible from the internet

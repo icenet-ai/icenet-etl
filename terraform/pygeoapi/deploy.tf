@@ -2,17 +2,19 @@
 resource "null_resource" "write_config" {
   # Redeployment triggers
   triggers = {
-    always_run = "${timestamp()}"
+#    always_run = "${timestamp()}"
   }
   provisioner "local-exec" {
     command = <<EOF
     cd ../icenetgeoapi
-    echo 'app_url: ${azurerm_linux_web_app.this.default_hostname}' > pygeoapi.secrets
-    echo 'postgres_dbname: ${var.postgres_db_name}' >> pygeoapi.secrets
-    echo 'postgres_host: ${var.postgres_db_host}' >> pygeoapi.secrets
-    echo 'postgres_reader_password: ${var.postgres_db_reader_password}' >> pygeoapi.secrets
-    echo 'postgres_reader_username: ${var.postgres_db_reader_username}' >> pygeoapi.secrets
-    echo 'pygeoapi_input_port: ${var.pygeoapi_input_port}' >> pygeoapi.secrets
+    cat <<SECRETS >pygeoapi.secrets
+app_url: ${azurerm_linux_web_app.this.default_hostname}
+postgres_dbname: ${var.postgres_db_name}
+postgres_host: ${var.postgres_db_host}
+postgres_reader_password: '${var.postgres_db_reader_password}'
+postgres_reader_username: ${var.postgres_db_reader_username}
+pygeoapi_input_port: ${var.pygeoapi_input_port}
+SECRETS
     python generate_config.py
     cd -
     EOF
@@ -22,7 +24,9 @@ resource "null_resource" "write_config" {
 # Create a local archive
 data "archive_file" "deploy" {
   # Define build order
-  depends_on  = [null_resource.write_config]
+  depends_on  = [
+    null_resource.write_config
+  ]
   type        = "zip"
   source_dir  = "../icenetgeoapi"
   output_path = "icenetgeoapi.zip"
@@ -31,7 +35,10 @@ data "archive_file" "deploy" {
 # Deploy from local zip file
 resource "null_resource" "deploy_zip" {
   # Define build order
-  depends_on = [null_resource.write_config, data.archive_file.deploy]
+  depends_on = [
+    null_resource.write_config,
+    data.archive_file.deploy
+  ]
 
   # Redeployment triggers
   triggers = {

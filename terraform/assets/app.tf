@@ -29,29 +29,28 @@ resource "azurerm_linux_web_app" "this" {
       python_version = "3.9"
     }
     app_command_line = "python run.py"
-    ip_restriction {
-      virtual_network_subnet_id = var.subnet_id
-    }
+    vnet_route_all_enabled = true
   }
+  # virtual_network_subnet_id = var.subnet_id
   app_settings = {}
   tags = local.tags
 }
 
-resource "azurerm_private_endpoint" "this" {
-  name                = "assetsprivateendpoint"
-  location            = var.webapps_resource_group.location
-  resource_group_name = var.webapps_resource_group.name
-  subnet_id           = var.subnet_id
-
-  private_dns_zone_group {
-    name = "privatednszonegroup"
-    private_dns_zone_ids = [var.dns_zone.id]
-  }
-
-  private_service_connection {
-    name = "privateendpointconnection"
-    private_connection_resource_id = azurerm_linux_web_app.this.id
-    subresource_names = ["sites"]
-    is_manual_connection = false
-  }
-}
+#resource "azurerm_private_endpoint" "this" {
+#  name                = "assetsprivateendpoint"
+#  location            = var.webapps_resource_group.location
+#  resource_group_name = var.webapps_resource_group.name
+#  subnet_id           = var.subnet_id
+#
+#  private_dns_zone_group {
+#    name = "privatednszonegroup"
+#    private_dns_zone_ids = [var.dns_zone.id]
+#  }
+#
+#  private_service_connection {
+#    name = "privateendpointconnection"
+#    private_connection_resource_id = azurerm_linux_web_app.this.id
+#    subresource_names = ["sites"]
+#    is_manual_connection = false
+#  }
+#}

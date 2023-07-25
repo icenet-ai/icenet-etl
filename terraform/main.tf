@@ -64,7 +64,7 @@ module "pygeoapi" {
   default_tags                = local.tags
   project_name                = local.project_name
   location                    = var.location
-  subnet_id                   = module.network.private_subnet.id
+  subnet_id                   = module.network.public_subnet.id
   dns_zone                    = module.network.dns_zone
   webapps_resource_group      = module.web.resource_group
 }
@@ -75,7 +75,7 @@ module "assets" {
   default_tags                = local.tags
   project_name                = local.project_name
   location                    = var.location
-  subnet_id                   = module.network.private_subnet.id
+  subnet_id                   = module.network.public_subnet.id
   dns_zone                    = module.network.dns_zone
   webapps_resource_group      = module.web.resource_group
 }
@@ -93,7 +93,7 @@ module "forecast_processor" {
   input_storage_account        = module.data.inputs_storage_account
   input_storage_resource_group = module.data.resource_group
   processing_storage_account   = module.data.processors_storage_account
-  subnet_id                    = module.network.private_subnet.id
+  subnet_id                    = module.network.public_subnet.id
   docker_username              = var.docker_username
   docker_password              = var.docker_password
   notification_email           = var.notification_email

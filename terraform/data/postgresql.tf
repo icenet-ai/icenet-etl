@@ -9,7 +9,8 @@ resource "azurerm_postgresql_server" "this" {
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
-  public_network_access_enabled = false
+  # TODO: public access
+  public_network_access_enabled = true
 
   administrator_login              = azurerm_key_vault_secret.db_admin_username.value
   administrator_login_password     = azurerm_key_vault_secret.db_admin_password.value
@@ -40,16 +41,46 @@ resource "azurerm_postgresql_configuration" "this" {
   value               = each.value
 }
 
-resource "azurerm_private_endpoint" "this" {
-  name                = "psql-${var.project_name}-endpoint"
-  location            = azurerm_resource_group.this.location
-  resource_group_name = azurerm_resource_group.this.name
-  subnet_id           = var.public_subnet_id
+### Configuration using cyrilgdn/postgresql
 
-  private_service_connection {
-    name                           = "psql-${var.project_name}-pvtsvcconn"
-    private_connection_resource_id = azurerm_postgresql_server.this.id
-    subresource_names              = ["postgresqlServer"]
-    is_manual_connection           = false
-  }
+# Install the PostGIS extension
+resource "postgresql_extension" "postgis" {
+  name       = "postgis"
+  depends_on = [azurerm_postgresql_database.this]
+}
+
+# Role names
+resource "postgresql_role" "reader" {
+  name             = azurerm_key_vault_secret.db_reader_username.value
+  login            = true
+  password         = azurerm_key_vault_secret.db_reader_password.value
+  connection_limit = 50
+  depends_on       = [azurerm_postgresql_database.this]
+}
+resource "postgresql_role" "writer" {
+  name             = azurerm_key_vault_secret.db_writer_username.value
+  login            = true
+  password         = azurerm_key_vault_secret.db_writer_password.value
+  connection_limit = 4
+  depends_on       = [azurerm_postgresql_database.this]
+}
+
+# Role privileges
+resource "postgresql_default_privileges" "read_tables" {
+  database    = var.database_names[0]
+  role        = postgresql_role.reader.name
+  schema      = "public"
+  owner       = azurerm_key_vault_secret.db_admin_username.value
+  object_type = "table"
+  privileges  = ["SELECT"]
+  depends_on  = [postgresql_role.reader]
+}
+resource "postgresql_default_privileges" "write_tables" {
+  database    = var.database_names[0]
+  role        = postgresql_role.writer.name
+  schema      = "public"
+  owner       = azurerm_key_vault_secret.db_admin_username.value
+  object_type = "table"
+  privileges  = ["DELETE", "INSERT", "SELECT", "UPDATE"]
+  depends_on  = [postgresql_role.writer]
 }

@@ -56,7 +56,6 @@ resource "azurerm_linux_function_app" "this" {
     application_insights_connection_string = "InstrumentationKey=${azurerm_application_insights.this.instrumentation_key}"
     application_insights_key  = "${azurerm_application_insights.this.instrumentation_key}"
     application_stack {
-#      python_version = "3.8"
       docker {
         registry_url            = "registry.hub.docker.com"
         registry_username       = var.docker_username
@@ -65,10 +64,9 @@ resource "azurerm_linux_function_app" "this" {
         image_tag               = "latest"
       }
     }
-    ip_restriction {
-      virtual_network_subnet_id = var.subnet_id
-    }
+    vnet_route_all_enabled = true
   }
+  # virtual_network_subnet_id = var.subnet_id
   app_settings = {
     "COMMS_ENDPOINT"                 = azurerm_communication_service.comms.primary_connection_string
     "COMMS_TO_EMAIL"                 = var.notification_email
