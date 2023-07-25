@@ -53,7 +53,7 @@ resource "null_resource" "deploy_zip" {
     echo "Deploying app from $(pwd)"
     az webapp deployment source config-zip --ids ${azurerm_linux_web_app.this.id} --src ${data.archive_file.deploy.output_path}
     echo "Removing ${data.archive_file.deploy.output_path}"
-    #rm ${data.archive_file.deploy.output_path}
+    rm ${data.archive_file.deploy.output_path}
     EOF
   }
 }
