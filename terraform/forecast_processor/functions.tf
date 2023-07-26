@@ -57,7 +57,7 @@ resource "azurerm_linux_function_app" "this" {
     application_insights_key  = "${azurerm_application_insights.this.instrumentation_key}"
     application_stack {
       docker {
-        registry_url            = "registry.hub.docker.com"
+        registry_url            = "https://registry.hub.docker.com"
         registry_username       = var.docker_username
         registry_password       = var.docker_password
         image_name              = "jimcircadian/iceneteventprocessor"
@@ -71,6 +71,8 @@ resource "azurerm_linux_function_app" "this" {
     "COMMS_ENDPOINT"                 = azurerm_communication_service.comms.primary_connection_string
     "COMMS_TO_EMAIL"                 = var.notification_email
     "COMMS_FROM_EMAIL"               = var.sendfrom_email
+    "ENABLE_ORYX_BUILD"              = "true"
+    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true"
     # Must have this for using docker containers, or persistent storage will be
     # enabled which mounts over the contents of the container.
     # https://github.com/Azure/azure-functions-docker/issues/642
