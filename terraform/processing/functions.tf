@@ -80,7 +80,7 @@ resource "azurerm_linux_function_app" "this" {
     # TODO: update after forecast-processor implementation, rather than manual
     #"EVENTGRID_DOMAIN_KEY"
     "EVENTGRID_DOMAIN_TOPIC"                = "eg-${var.project_name}-processing-topic"
-    "EVENTGRID_DOMAIN_ENDPOINT"             = "https://eg-${var.project_name}-processing-topic.${var.location}-1.eventgrid.azure.net/api/events"
+    "EVENTGRID_DOMAIN_ENDPOINT"             = "https://egd-${var.project_name}-processing-domain.${var.location}-1.eventgrid.azure.net/api/events"
     "FUNCTIONS_WORKER_RUNTIME"              = "python"
     "PSQL_DB"                               = var.database_name
     "PSQL_HOST"                             = var.database_fqdn

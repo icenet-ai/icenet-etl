@@ -66,4 +66,15 @@ resource "azurerm_eventgrid_system_topic_event_subscription" "egs-forecast-topic
   subject_filter {
     subject_ends_with       = ".nc"
   }
+
+  advanced_filter {
+    string_in {
+      key    = "data.api"
+      values = ["PutBlob"]
+    }
+    string_not_begins_with {
+      key    = "eventtype"
+      values = ["Microsoft.Resources"]
+    }
+  }
 }
