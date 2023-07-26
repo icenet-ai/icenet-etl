@@ -1,7 +1,7 @@
 
 # Service plan that functions belong to
 resource "azurerm_service_plan" "this" {
-  name                = "plan-${var.project_name}-assets"
+  name                = "plan-${var.project_name}-application"
   resource_group_name = var.webapps_resource_group.name
   location            = var.location
 
@@ -14,21 +14,20 @@ resource "azurerm_service_plan" "this" {
 
 # Functions to be deployed
 resource "azurerm_linux_web_app" "this" {
-  name                       = "web-${var.project_name}-assets"
+  name                       = "web-${var.project_name}-application"
   location                   = var.location
   resource_group_name        = var.webapps_resource_group.name
   service_plan_id            = azurerm_service_plan.this.id
 
   site_config {
-    use_32_bit_worker         = false
-    always_on        = true
+    use_32_bit_worker = false
+    always_on         = true
     application_stack {
-      python_version = "3.9"
+      python_version = "3.8"
     }
-    app_command_line = "python run.py"
-    vnet_route_all_enabled = true
+#    app_command_line = "python run.py"
   }
-  # virtual_network_subnet_id = var.subnet_id
+
   app_settings = {}
   tags = local.tags
 }

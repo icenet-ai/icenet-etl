@@ -27,7 +27,7 @@ variable "default_tags" {
 locals {
   tags = merge(
     {
-      "module" = "dashboard"
+      "module" = "application"
     },
     var.default_tags,
   )
@@ -37,6 +37,5 @@ locals {
   # Standard S2: 2 core, 3.5 GB memory £136.91/month
   # Premium P1V2: 1 core, 3.5 GB memory £136.91/month
   # Premium P1V3: 1 core, 8 GB memory £182.36/month
-  app_sku_category = "Standard"
-  app_sku          = "S1"
+  app_sku          = "B1"
 }
