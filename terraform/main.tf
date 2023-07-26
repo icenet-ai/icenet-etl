@@ -70,8 +70,8 @@ module "pygeoapi" {
 }
 
 # Dashboard and data access application
-module "assets" {
-  source                      = "./assets"
+module "application" {
+  source                      = "./application"
   default_tags                = local.tags
   project_name                = local.project_name
   location                    = var.location
