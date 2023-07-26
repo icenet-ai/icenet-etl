@@ -15,7 +15,7 @@ def main(event: func.EventGridEvent):
         'event_type': event.event_type,
     })
 
-    logging.info('IceNet EventGrid trigger processed an event: %s', event.subject)
+    logging.info("IceNet EventGrid trigger processed an event: {}", result)
 
     # Upload and consume configuration for rule processing based on it
     # https://github.com/Azure-Samples/communication-services-python-quickstarts/blob/main/send-email/send-email.py
@@ -34,7 +34,7 @@ def send_email(from_addr, to_addr, subject, message, poller_wait=10):
     try:
         connection_string = os.environ["COMMS_ENDPOINT"]
         client = EmailClient.from_connection_string(connection_string)
-        
+
         content = {
             "subject": "Forecast arrived with IceNet Event Processor",
             "plainText": message,
@@ -72,7 +72,7 @@ def send_email(from_addr, to_addr, subject, message, poller_wait=10):
 
 if __name__ == "__main__":
     import sys
-    
+
     if len(sys.argv) != 3:
         print("Usage: {} from_addr to_addr".format(sys.argv[0]))
         sys.exit(1)
