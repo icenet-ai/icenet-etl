@@ -65,4 +65,6 @@ locals {
   # ElasticPremium  EP3  4 core  14    GB RAM
   # app_sku_category = "ElasticPremium"
   app_sku          = "EP1"
+  event_retries    = 1
+  event_ttl        = 1
 }

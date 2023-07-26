@@ -5,6 +5,8 @@ import time
 
 # Third party
 import azure.functions as func
+from azure.eventgrid import EventGridPublisherClient, EventGridEvent
+from azure.core.credentials import AzureKeyCredential
 
 # Local
 from .processor import Processor
@@ -30,3 +32,29 @@ def main(inputBlob: func.InputStream):
     logging.info(
         f"{log_prefix} Total time: {human_readable(time.monotonic() - time_start)}"
     )
+
+    if "EVENTGRID_DOMAIN_KEY" in os.environ:
+        domain_key = os.environ["EVENTGRID_DOMAIN_KEY"]
+        domain_hostname = os.environ["EVENTGRID_DOMAIN_ENDPOINT"]
+        domain_topic = os.environ["EVENTGRID_DOMAIN_TOPIC"]
+
+        try:
+            logging.info(f"Key supplied for event grid publishing, connecting to {domain_hostname}")
+            credential = AzureKeyCredential(domain_key)
+            client = EventGridPublisherClient(domain_hostname, credential)
+
+            logging.info(f"Publishing icenet.forecast.processed event to {domain_topic}")
+            client.send([
+                EventGridEvent(
+                    topic=domain_topic,
+                    event_type="icenet.forecast.processed",
+                    data={
+                        "filename": f"{inputBlob.name}"
+                    },
+                    subject=f"{os.path.splitext(os.path.basename(inputBlob.name))[0]} has been processed into DB",
+                    data_version="2.0"
+                )
+            ])
+            logging.info(f"Event published")
+        except Exception as ex:
+            logging.exception(ex)

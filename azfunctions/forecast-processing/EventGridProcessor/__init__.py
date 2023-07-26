@@ -15,7 +15,7 @@ def main(event: func.EventGridEvent):
         'event_type': event.event_type,
     })
 
-    logging.info("IceNet EventGrid trigger processed an event: {}", result)
+    logging.info("IceNet EventGrid trigger processed an event: {}".format(result))
 
     # Upload and consume configuration for rule processing based on it
     # https://github.com/Azure-Samples/communication-services-python-quickstarts/blob/main/send-email/send-email.py

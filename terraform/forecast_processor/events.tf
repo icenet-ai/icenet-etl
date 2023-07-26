@@ -20,6 +20,11 @@ resource "azurerm_eventgrid_event_subscription" "processing_subs" {
     max_events_per_batch = 1
     preferred_batch_size_in_kilobytes = 64
   }
+
+  retry_policy {
+    max_delivery_attempts   = local.event_retries
+    event_time_to_live      = local.event_ttl
+  }
 }
 
 ## Storage events
@@ -44,12 +49,17 @@ resource "azurerm_eventgrid_system_topic_event_subscription" "egs-forecast-topic
   # https://learn.microsoft.com/en-us/azure/event-grid/event-schema-blob-storage?tabs=event-grid-event-schema
   included_event_types = [
     "Microsoft.Storage.BlobCreated",
-    "Microsoft.Storage.DirectoryCreated"
+    # "Microsoft.Storage.DirectoryCreated"
   ]
 
   azure_function_endpoint {
     function_id       =   "${azurerm_linux_function_app.this.id}/functions/EventGridProcessor"
     max_events_per_batch = 1
     preferred_batch_size_in_kilobytes = 64
+  }
+
+  retry_policy {
+    max_delivery_attempts   = local.event_retries
+    event_time_to_live      = local.event_ttl
   }
 }

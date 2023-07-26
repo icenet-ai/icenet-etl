@@ -1,5 +1,3 @@
-## https://learn.microsoft.com/en-us/azure/app-service/overview-vnet-integration
-
 # Create the resource group
 resource "azurerm_resource_group" "this" {
   name     = "rg-${var.project_name}-processing"
@@ -79,6 +77,10 @@ resource "azurerm_linux_function_app" "this" {
   app_settings = {
     "BUILD_FLAGS"                           = "UseExpressBuild"
     "ENABLE_ORYX_BUILD"                     = "true"
+    # TODO: update after forecast-processor implementation, rather than manual
+    #"EVENTGRID_DOMAIN_KEY"
+    "EVENTGRID_DOMAIN_TOPIC"                = "eg-${var.project_name}-processing-topic"
+    "EVENTGRID_DOMAIN_ENDPOINT"             = "https://eg-${var.project_name}-processing-topic.${var.location}-1.eventgrid.azure.net/api/events"
     "FUNCTIONS_WORKER_RUNTIME"              = "python"
     "PSQL_DB"                               = var.database_name
     "PSQL_HOST"                             = var.database_fqdn
