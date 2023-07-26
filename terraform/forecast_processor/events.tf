@@ -62,4 +62,8 @@ resource "azurerm_eventgrid_system_topic_event_subscription" "egs-forecast-topic
     max_delivery_attempts   = local.event_retries
     event_time_to_live      = local.event_ttl
   }
+
+  subject_filter {
+    subject_ends_with       = ".nc"
+  }
 }
