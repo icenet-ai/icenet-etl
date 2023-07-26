@@ -14,32 +14,6 @@ resource "azurerm_application_insights" "this" {
   tags                = local.tags
 }
 
-# Create the storage account
-resource "azurerm_storage_account" "this" {
-  name                     = "st${var.project_name}processing"
-  resource_group_name      = azurerm_resource_group.this.name
-  location                 = azurerm_resource_group.this.location
-  account_tier             = "Standard"
-  account_kind             = "StorageV2"
-  account_replication_type = "LRS"
-  tags                     = local.tags
-}
-resource "azurerm_storage_account_network_rules" "this" {
-  storage_account_id         = azurerm_storage_account.this.id
-
-  default_action             = "Allow"
-  ip_rules                   = []
-  virtual_network_subnet_ids = [var.subnet_id]
-  bypass                     = ["AzureServices"]
-}
-
-# Storage container for deploying functions
-resource "azurerm_storage_container" "this" {
-  name                  = "deployments"
-  storage_account_name  = azurerm_storage_account.this.name
-  container_access_type = "private"
-}
-
 # Service plan that functions belong to
 resource "azurerm_service_plan" "this" {
   name                         = "plan-${var.project_name}-processing"
