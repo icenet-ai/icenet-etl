@@ -20,7 +20,10 @@ def main(event: func.EventGridEvent):
     # Upload and consume configuration for rule processing based on it
     # https://github.com/Azure-Samples/communication-services-python-quickstarts/blob/main/send-email/send-email.py
 
-    message = """IceNet Forecast: please review latest forecast...""".format(event.subject)
+    message = """IceNet Forecast: please review latest forecast...
+
+{}
+{}""".format(event.subject, result)
 
     # Staging email
     try:
