@@ -20,7 +20,7 @@ Install `Python` requirements with the following:
 * `pip install --upgrade pip poetry`
 * `poetry install`
 
-## Setup the Terraform backend
+### Setup the Terraform backend
 
 * Run the `Terraform` setup script `./setup_terraform.py` like so: 
 
@@ -48,7 +48,7 @@ terraform init -backend-config=backend.secrets \
 * Check the actions that `Terraform` will carry out by running `terraform plan -var-file=azure.secrets`
 * Deploy using `Terraform` by running `terraform apply -var-file=azure.secrets`
 
-## Interfacing with IceNet pipeline
+### Interfacing with IceNet pipeline
 
 In order to process `NetCDF` files created by the [IceNet pipeline](https://github.com/antarctica/IceNet-Pipeline), these need to be uploaded to the blob storage created by the `Terraform` commands above.
 Follow [the instructions here](https://docs.microsoft.com/en-us/azure/cognitive-services/translator/document-translation/create-sas-tokens) to generate tokens for the blob storage at:
@@ -70,7 +70,7 @@ To retry a failed run, do one of the following:
 
 Other methods are possible (for example interfacing with blob receipts) but these are more complicated.
 
-## Providing access to raw data
+### Providing access to raw data
 
 In order to provide access to the `NetCDF` files stored in blob storage another SAS token will be needed.
 Follow [the instructions here](https://docs.microsoft.com/en-us/azure/cognitive-services/translator/document-translation/create-sas-tokens) to generate tokens for the blob storage at:
@@ -81,7 +81,7 @@ Follow [the instructions here](https://docs.microsoft.com/en-us/azure/cognitive-
 
 The SAS token will need: `Read` and `List` permissions.
 
-## forecast-processing image
+### forecast-processing image
 
 ```
 docker build -t jimcircadian/iceneteventprocessor:[[version]]
@@ -90,3 +90,21 @@ docker push jimcircadian/iceneteventprocessor:latest```
 ```
 
 or something like that...
+
+## Versioning
+
+There's no incremental versioning at present. 
+
+v0.0.1 refers to the ongoing development until we move into demo usage, at which point this will
+be reviewed...
+
+## Credits
+
+<a href="https://github.com/icenet-ai/icenet-etl/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=icenet-ai/icenet-etl" />
+</a>
+
+## License
+
+This is licensed using the [MIT License](LICENSE)
+
