@@ -13,7 +13,7 @@ resource "azurerm_eventgrid_domain_topic" "processing" {
 
 resource "azurerm_eventgrid_event_subscription" "processing_subs" {
   name                = "eg-${var.project_name}-processing-subscription"
-  scope               = azurerm_resource_group.this.id
+  scope               = azurerm_eventgrid_domain_topic.processing.id
 
   azure_function_endpoint {
     function_id       =   "${azurerm_linux_function_app.this.id}/functions/EventGridProcessor"
