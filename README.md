@@ -83,8 +83,10 @@ The SAS token will need: `Read` and `List` permissions.
 
 ## forecast-processing image
 
-```docker build -t jimcircadian/iceneteventprocessor:[[version]]
-docker tag jimcircadian/iceneteventprocessor:[[version]] jimcircadian:latest
+```
+docker build -t jimcircadian/iceneteventprocessor:[[version]]
+docker tag jimcircadian/iceneteventprocessor:[[version]] jimcircadian/iceneteventprocessor:latest
 docker push jimcircadian/iceneteventprocessor:latest```
+```
 
-or something like that
+or something like that...

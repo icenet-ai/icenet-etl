@@ -20,6 +20,7 @@ RUN pip install --upgrade pip setuptools wheel && rm -rf /var/lib/apt/lists/* &&
         matplotlib \
         netcdf4 \
         rioxarray \
+        'urllib3<=2.0.0' \
         xarray[io] && pip install --no-deps icenet
 
 COPY . /home/site/wwwroot
