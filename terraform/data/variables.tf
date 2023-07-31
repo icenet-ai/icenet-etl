@@ -17,6 +17,10 @@ variable "private_subnet_id" {
 
 ##
 # PostgreSQL variables
+variable "allowed_cidrs" {
+  type        = map(string)
+  description = "List of CIDRs that users can connect from"
+}
 variable "database_names" {
   description = "List of database names"
   type        = list(string)

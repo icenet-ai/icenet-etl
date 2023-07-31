@@ -20,6 +20,7 @@ module "secrets" {
 # Data storage
 module "data" {
   source = "./data"
+  allowed_cidrs       = var.users_ip_addresses
   default_tags        = local.tags
   location            = var.location
   project_name        = local.project_name

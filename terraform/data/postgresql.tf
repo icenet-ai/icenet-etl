@@ -9,7 +9,7 @@ resource "azurerm_postgresql_server" "this" {
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
-  
+
   # TODO: public access - client IP wasn't enabled in pg_hba on fresh restart though?
   public_network_access_enabled = true
 
@@ -42,12 +42,22 @@ resource "azurerm_postgresql_configuration" "this" {
   value               = each.value
 }
 
+resource "azurerm_postgresql_firewall_rule" "user_rules" {
+  for_each            = { for name, cidr_block in var.allowed_cidrs : name => cidr_block }
+  name                = "AllowConnectionsFrom${each.key}"
+  resource_group_name = azurerm_resource_group.this.name
+  server_name         = azurerm_postgresql_server.this.name
+  start_ip_address    = cidrhost(each.value, 0)
+  end_ip_address      = cidrhost(each.value, -1)
+}
+
+
 ### Configuration using cyrilgdn/postgresql
 
 # Install the PostGIS extension
 resource "postgresql_extension" "postgis" {
   name       = "postgis"
-  depends_on = [azurerm_postgresql_database.this]
+  depends_on = [azurerm_postgresql_server.this]
 }
 
 # Role names
@@ -56,14 +66,14 @@ resource "postgresql_role" "reader" {
   login            = true
   password         = azurerm_key_vault_secret.db_reader_password.value
   connection_limit = 50
-  depends_on       = [azurerm_postgresql_database.this]
+  depends_on       = [azurerm_postgresql_server.this]
 }
 resource "postgresql_role" "writer" {
   name             = azurerm_key_vault_secret.db_writer_username.value
   login            = true
   password         = azurerm_key_vault_secret.db_writer_password.value
   connection_limit = 4
-  depends_on       = [azurerm_postgresql_database.this]
+  depends_on       = [azurerm_postgresql_server.this]
 }
 
 # Role privileges
