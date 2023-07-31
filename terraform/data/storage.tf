@@ -16,6 +16,23 @@ resource "azurerm_storage_container" "data" {
   container_access_type = "private"
 }
 
+resource "azurerm_storage_share" "data_share" {
+  name                 = "data"
+  storage_account_name = azurerm_storage_account.data.name
+  quota                = 500
+#  enabled_protocol     = "NFS"
+
+  acl {
+    id = "4c35c723-1b33-44f9-af48-4d91c72b6d7e"
+
+    access_policy {
+      permissions = "rwdl"
+      start       = "2023-07-31T00:00:00.0000000Z"
+      expiry      = "2023-12-31T00:00:00.0000000Z"
+    }
+  }
+}
+
 resource "azurerm_storage_account_network_rules" "data_rules" {
   storage_account_id         = azurerm_storage_account.data.id
 

@@ -82,21 +82,13 @@ resource "azurerm_linux_function_app" "this" {
     # https://github.com/Azure/azure-functions-docker/issues/642
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }
-#  storage_account {
-#    account_name  = var.processing_storage_account.name
-#    access_key    = var.processing_storage_account.primary_access_key
-#    name          = "processor"
-#    share_name    = "processor"
-#    type          = "AzureFiles"
-#    mount_path    = "/data/processor"
-#  }
-#  storage_account {
-#    account_name  = var.input_storage_account.name
-#    access_key    = var.input_storage_account.primary_access_key
-#    name          = "input"
-#    share_name    = "input"
-#    type          = "AzureFiles"
-#    mount_path    = "/data/input"
-#  }
+  storage_account {
+    account_name  = var.data_storage_account.name
+    access_key    = var.data_storage_account.primary_access_key
+    name          = "data"
+    share_name    = "data"
+    type          = "AzureFiles"
+    mount_path    = "/data"
+  }
   tags = local.tags
 }
