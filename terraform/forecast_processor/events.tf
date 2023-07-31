@@ -31,9 +31,9 @@ resource "azurerm_eventgrid_event_subscription" "processing_subs" {
 resource "azurerm_eventgrid_system_topic" "storage" {
   name                = "egs-${var.project_name}-forecast-topic"
   location            = var.location
-  resource_group_name = var.input_storage_resource_group.name
+  resource_group_name = var.data_storage_resource_group.name
 
-  source_arm_resource_id = var.input_storage_account.id
+  source_arm_resource_id = var.data_storage_account.id
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   tags = local.tags
@@ -42,14 +42,14 @@ resource "azurerm_eventgrid_system_topic" "storage" {
 resource "azurerm_eventgrid_system_topic_event_subscription" "egs-forecast-topic" {
   name                = "sub-${var.project_name}-forecast-topic"
   system_topic        = "egs-${var.project_name}-forecast-topic"
+
   # This is documented as the location of the system topic, but it still throws resource not found
-  resource_group_name = var.input_storage_resource_group.name
+  resource_group_name = var.data_storage_resource_group.name
   depends_on          = [azurerm_linux_function_app.this]
 
   # https://learn.microsoft.com/en-us/azure/event-grid/event-schema-blob-storage?tabs=event-grid-event-schema
   included_event_types = [
     "Microsoft.Storage.BlobCreated",
-    # "Microsoft.Storage.DirectoryCreated"
   ]
 
   azure_function_endpoint {
@@ -71,10 +71,6 @@ resource "azurerm_eventgrid_system_topic_event_subscription" "egs-forecast-topic
     string_in {
       key    = "data.api"
       values = ["PutBlob"]
-    }
-    string_not_begins_with {
-      key    = "eventtype"
-      values = ["Microsoft.Resources"]
     }
   }
 }

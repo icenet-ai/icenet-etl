@@ -2,13 +2,9 @@ output "resource_group" {
   description = "Resource group of the data group"
   value       = azurerm_resource_group.this
 }
-output "inputs_storage_account" {
-  description = "Storage account"
-  value       = azurerm_storage_account.inputs
-}
-output "processors_storage_account" {
-  description = "Storage account for deployments"
-  value       = azurerm_storage_account.processors
+output "storage_account" {
+  description = "Storage account for data"
+  value       = azurerm_storage_account.data
 }
 
 output "server_fqdn" {

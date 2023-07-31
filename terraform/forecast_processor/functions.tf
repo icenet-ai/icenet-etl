@@ -48,8 +48,10 @@ resource "azurerm_linux_function_app" "this" {
   location                   = var.location
   resource_group_name        = azurerm_resource_group.this.name
   service_plan_id            = azurerm_service_plan.this.id
-  storage_account_name       = var.processing_storage_account.name
-  storage_account_access_key = var.processing_storage_account.primary_access_key
+
+  storage_account_name       = var.data_storage_account.name
+  storage_account_access_key = var.data_storage_account.primary_access_key
+
   site_config {
     elastic_instance_minimum  = 1
     use_32_bit_worker         = false
@@ -80,5 +82,21 @@ resource "azurerm_linux_function_app" "this" {
     # https://github.com/Azure/azure-functions-docker/issues/642
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }
+#  storage_account {
+#    account_name  = var.processing_storage_account.name
+#    access_key    = var.processing_storage_account.primary_access_key
+#    name          = "processor"
+#    share_name    = "processor"
+#    type          = "AzureFiles"
+#    mount_path    = "/data/processor"
+#  }
+#  storage_account {
+#    account_name  = var.input_storage_account.name
+#    access_key    = var.input_storage_account.primary_access_key
+#    name          = "input"
+#    share_name    = "input"
+#    type          = "AzureFiles"
+#    mount_path    = "/data/input"
+#  }
   tags = local.tags
 }

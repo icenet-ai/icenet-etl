@@ -7,16 +7,13 @@ variable "location" {
   default     = "uksouth"
 }
 
-variable "processing_storage_account" {
-  description = "Storage account for processing data"
-}
 variable "processing_resource_group" {
   description = "Resource group for processing"
 }
-variable "input_storage_account" {
+variable "data_storage_account" {
   description = "Storage account containing inputs"
 }
-variable "input_storage_resource_group" {
+variable "data_storage_resource_group" {
   description = "Input storage account resource group"
 }
 variable "docker_username" {

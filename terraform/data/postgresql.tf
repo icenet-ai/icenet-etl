@@ -9,7 +9,8 @@ resource "azurerm_postgresql_server" "this" {
   backup_retention_days        = 7
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
-  # TODO: public access
+  
+  # TODO: public access - client IP wasn't enabled in pg_hba on fresh restart though?
   public_network_access_enabled = true
 
   administrator_login              = azurerm_key_vault_secret.db_admin_username.value

@@ -22,7 +22,7 @@ Install `Python` requirements with the following:
 
 ### Setup the Terraform backend
 
-* Run the `Terraform` setup script `./setup_terraform.py` like so: 
+* Run the `Terraform` setup script `./setup_terraform.py` like so:
 
 ```
 ./setup_terraform.py -v \
@@ -46,9 +46,13 @@ terraform init -backend-config=backend.[[ENV]].secrets \
   -backend-config='container_name=[[state_containername]]'
 ```
 
+### Running terraform
+
 * Check the actions that `Terraform` will carry out by running `terraform plan -var-file=azure.[[ENV]].secrets`
 * Deploy using `Terraform` by running `terraform apply -var-file=azure.[[ENV]].secrets`
 * Switch environments by calling `terraform init` again
+
+**Note that a full run from fresh will likely fail and the apply need rerunning, because we've not sorted all the resource chaining out yet**
 
 ### Interfacing with IceNet pipeline
 
@@ -85,7 +89,7 @@ The SAS token will need: `Read` and `List` permissions.
 
 ## Versioning
 
-There's no incremental versioning at present. 
+There's no incremental versioning at present.
 
 v0.0.1 refers to the ongoing development until we move into demo usage, at which point this will
 be reviewed...
@@ -99,4 +103,3 @@ be reviewed...
 ## License
 
 This is licensed using the [MIT License](LICENSE)
-
