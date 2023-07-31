@@ -20,8 +20,10 @@ override.tf.json
 
 # Ignore configuration files that contain secrets
 terraform/backend.secrets
+terraform/backend.*.secrets
 terraform/azure.secrets
-azfunctions/local.settings.json
+terraform/azure.*.secrets
+local.settings.json
 
 # Ignore lock files
 .terraform.lock.hcl

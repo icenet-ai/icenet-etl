@@ -9,7 +9,7 @@ You will need to install the following in order to use this package:
 
 - A [`Microsoft Azure`](https://portal.azure.com) account with at least `Contributor` permissions on the `IceNet` subscription
 
-* `Python 3.9` (this is the latest version supported by `Azure Functions`)
+* `Python 3.8` or above
 
 ## Setup the Azure infrastructure
 
@@ -17,8 +17,8 @@ You will need to install the following in order to use this package:
 
 Install `Python` requirements with the following:
 
-* `pip install --upgrade pip poetry`
-* `poetry install`
+* `pip install --upgrade pip setuptools wheel`
+* `pip install -r requirements.txt`
 
 ### Setup the Terraform backend
 
@@ -26,12 +26,13 @@ Install `Python` requirements with the following:
 
 ```
 ./setup_terraform.py -v \
-  -i [[redacted]] \
-  -s [[redacted]] \
-  -g [[redacted]] \
-  -rg [[redacted]] \
-  -sa [[accountname]] \
-  -sc [[containername]]```
+  -i [[admin_subnets]] \
+  -s [[subscription_name]] \
+  -rg [[state_resourcegroupname]] \
+  -sa [[state_accountname]] \
+  -sc [[state_containername]] \
+  [[docker_login]] \
+  [[notification_email]]
 ```
 
 **You can specify the environment with `-e [[ENV]]` which defaults to `dev`**
@@ -40,21 +41,22 @@ Install `Python` requirements with the following:
 * Initialise `Terraform` by running `terraform init` like so:
 
 ```
-terraform init -backend-config=backend.secrets \
-  -backend-config='storage_account_name=[[accountname]]' \
-  -backend-config='container_name=[[containername]]'
+terraform init -backend-config=backend.[[ENV]].secrets \
+  -backend-config='storage_account_name=[[state_accountname]]' \
+  -backend-config='container_name=[[state_containername]]'
 ```
 
-* Check the actions that `Terraform` will carry out by running `terraform plan -var-file=azure.secrets`
-* Deploy using `Terraform` by running `terraform apply -var-file=azure.secrets`
+* Check the actions that `Terraform` will carry out by running `terraform plan -var-file=azure.[[ENV]].secrets`
+* Deploy using `Terraform` by running `terraform apply -var-file=azure.[[ENV]].secrets`
+* Switch environments by calling `terraform init` again
 
 ### Interfacing with IceNet pipeline
 
-In order to process `NetCDF` files created by the [IceNet pipeline](https://github.com/antarctica/IceNet-Pipeline), these need to be uploaded to the blob storage created by the `Terraform` commands above.
+In order to process `NetCDF` files created by the [IceNet pipeline](https://github.com/icenet-ai/icenet-pipeline), these need to be uploaded to the blob storage created by the `Terraform` commands above.
 Follow [the instructions here](https://docs.microsoft.com/en-us/azure/cognitive-services/translator/document-translation/create-sas-tokens) to generate tokens for the blob storage at:
 
-* resource group: `rg-icenetetldev-data`
-* storage account: `sticenetetldevdata`
+* resource group: `rg-icenet[[ENV]]-data`
+* storage account: `sticenet[[ENV]]data`
 * storage container: `input`
 
 The SAS token will need: `Create`, `Write`, `Add` and `List` permissions.
@@ -75,8 +77,8 @@ Other methods are possible (for example interfacing with blob receipts) but thes
 In order to provide access to the `NetCDF` files stored in blob storage another SAS token will be needed.
 Follow [the instructions here](https://docs.microsoft.com/en-us/azure/cognitive-services/translator/document-translation/create-sas-tokens) to generate tokens for the blob storage at:
 
-* resource group: `rg-icenetetldev-data`
-* storage account: `sticenetetldevdata`
+* resource group: `rg-icenet[[ENV]]-data`
+* storage account: `sticenet[[ENV]]data`
 * storage container: `input`
 
 The SAS token will need: `Read` and `List` permissions.

@@ -28,7 +28,7 @@ variable "location" {
 variable "project_prefix" {
   description = "Project name prefix for resource naming"
   type        = string
-  default     = "icenetetl"
+  default     = "icenet"
 }
 variable "docker_username" {
   description = "Which Docker username to user"
