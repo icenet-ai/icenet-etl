@@ -83,16 +83,6 @@ Follow [the instructions here](https://docs.microsoft.com/en-us/azure/cognitive-
 
 The SAS token will need: `Read` and `List` permissions.
 
-### forecast-processing image
-
-```
-docker build -t jimcircadian/iceneteventprocessor:[[version]]
-docker tag jimcircadian/iceneteventprocessor:[[version]] jimcircadian/iceneteventprocessor:latest
-docker push jimcircadian/iceneteventprocessor:latest```
-```
-
-or something like that...
-
 ## Versioning
 
 There's no incremental versioning at present. 
