@@ -78,6 +78,7 @@ module "application" {
   location                    = var.location
   subnet_id                   = module.network.public_subnet.id
   dns_zone                    = module.network.dns_zone
+  data_storage_account        = module.data.storage_account
   webapps_resource_group      = module.web.resource_group
 }
 

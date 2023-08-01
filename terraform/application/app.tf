@@ -29,6 +29,16 @@ resource "azurerm_linux_web_app" "this" {
   }
 
   app_settings = {}
+
+  storage_account {
+    account_name  = var.data_storage_account.name
+    access_key    = var.data_storage_account.primary_access_key
+    name          = "data"
+    share_name    = "data"
+    type          = "AzureFiles"
+    mount_path    = "/data"
+  }
+  
   tags = local.tags
 }
 

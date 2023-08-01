@@ -6,6 +6,9 @@ variable "location" {
   description = "Which Azure location to build in"
   default     = "uksouth"
 }
+variable "data_storage_account" {
+  description = "Storage account containing inputs"
+}
 variable "webapps_resource_group" {
   description = "Resource group for webapps"
 }
