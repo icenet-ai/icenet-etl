@@ -2,7 +2,7 @@
 resource "null_resource" "write_config" {
   # Redeployment triggers
   triggers = {
-#    always_run = "${timestamp()}"
+    always_run = "${timestamp()}"
   }
   provisioner "local-exec" {
     command = <<EOF

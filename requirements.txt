@@ -1,6 +1,8 @@
 azure-identity
 azure-mgmt-resource
 azure-mgmt-storage
+chevron
 coloredlogs
 pyhcl
+pyyaml
 urllib3<2
