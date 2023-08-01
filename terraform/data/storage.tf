@@ -20,7 +20,6 @@ resource "azurerm_storage_share" "data_share" {
   name                 = "data"
   storage_account_name = azurerm_storage_account.data.name
   quota                = 500
-#  enabled_protocol     = "NFS"
 
   acl {
     id = "4c35c723-1b33-44f9-af48-4d91c72b6d7e"

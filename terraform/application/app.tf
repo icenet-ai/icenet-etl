@@ -25,7 +25,7 @@ resource "azurerm_linux_web_app" "this" {
     application_stack {
       python_version = "3.8"
     }
-#    app_command_line = "python run.py"
+    app_command_line = "gunicorn icenet_app.app:app"
   }
 
   app_settings = {}
