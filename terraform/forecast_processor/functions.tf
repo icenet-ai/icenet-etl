@@ -73,6 +73,7 @@ resource "azurerm_linux_function_app" "this" {
     "COMMS_ENDPOINT"                 = azurerm_communication_service.comms.primary_connection_string
     "COMMS_TO_EMAIL"                 = var.notification_email
     "COMMS_FROM_EMAIL"               = var.sendfrom_email
+    "FORECAST_PROCESSING_CONFIG"     = "/data/event-processing.yaml"
     # For building on deploy
     #"ENABLE_ORYX_BUILD"              = "true"
     #"SCM_DO_BUILD_DURING_DEPLOYMENT" = "true"

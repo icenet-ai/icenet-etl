@@ -5,7 +5,7 @@
       "name": "inputBlob",
       "type": "blobTrigger",
       "direction": "in",
-      "path": "input/{name}",
+      "path": "data/{name}",
       "connection": "AzureWebJobsStorage"
     }
   ]
