@@ -83,6 +83,10 @@ resource "azurerm_linux_function_app" "this" {
     # https://github.com/Azure/azure-functions-docker/issues/642
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
   }
+  identity {
+    type          = "SystemAssigned"
+    identity_ids  = []
+  }
   storage_account {
     account_name  = var.data_storage_account.name
     access_key    = var.data_storage_account.primary_access_key
@@ -92,4 +96,27 @@ resource "azurerm_linux_function_app" "this" {
     mount_path    = "/data"
   }
   tags = local.tags
+}
+
+resource "azurerm_role_definition" "app_data_read" {
+  description        = "Allows for read access to Azure Storage blob containers and data"
+  name               = "${local.app_name}-role-read-forecast-data"
+  scope              = var.data_storage_account.id
+
+  permissions {
+      actions          = [
+          "Microsoft.Storage/storageAccounts/blobServices/containers/read",
+      ]
+      data_actions     = [
+          "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+      ]
+      not_actions      = []
+      not_data_actions = []
+  }
+}
+
+resource "azurerm_role_assignment" "app_data_read_assoc" {
+  scope              = var.data_storage_account.id
+  role_definition_id = azurerm_role_definition.app_data_read.role_definition_resource_id
+  principal_id       = azurerm_linux_function_app.this.identity.0.principal_id
 }
