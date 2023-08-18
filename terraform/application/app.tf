@@ -28,7 +28,9 @@ resource "azurerm_linux_web_app" "this" {
     app_command_line = "gunicorn icenet_app.app:app"
   }
 
-  app_settings = {}
+  app_settings = {
+    "ICENET_DATA_LOCATION"    = "/data"
+  }
 
   storage_account {
     account_name  = var.data_storage_account.name
@@ -38,7 +40,7 @@ resource "azurerm_linux_web_app" "this" {
     type          = "AzureFiles"
     mount_path    = "/data"
   }
-  
+
   tags = local.tags
 }
 
