@@ -96,6 +96,9 @@ resource "azurerm_linux_function_app" "this" {
     mount_path    = "/data"
   }
   tags = local.tags
+  lifecycle {
+    ignore_changes = [tags]
+  }
 }
 
 resource "azurerm_role_definition" "app_data_read" {

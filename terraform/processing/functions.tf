@@ -64,6 +64,10 @@ resource "azurerm_linux_function_app" "this" {
     "XDG_CACHE_HOME"                        = "/tmp/.cache"
   }
   tags = local.tags
+
+  lifecycle {
+    ignore_changes = [tags]
+  }  
 }
 
 # Actual function deployment
