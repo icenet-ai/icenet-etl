@@ -70,6 +70,7 @@ module "pygeoapi" {
   subnet_id                   = module.network.public_subnet.id
   dns_zone                    = module.network.dns_zone
   webapps_resource_group      = module.web.resource_group
+  config_output_location      = var.pygeoapi_config_output_location
 }
 
 # Dashboard and data access application

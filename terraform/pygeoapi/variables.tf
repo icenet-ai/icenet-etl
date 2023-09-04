@@ -41,6 +41,12 @@ variable "subnet_id" {
   type = string
 }
 
+variable "config_output_location" {
+  description = "Location to output pygeoapi configuration variables to"
+  default     = ""
+  type        = string
+}
+
 variable "default_tags" {
     description = "Default tags for resources"
     type    = map(string)
