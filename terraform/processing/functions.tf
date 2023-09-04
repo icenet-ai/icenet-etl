@@ -63,33 +63,10 @@ resource "azurerm_linux_function_app" "this" {
     "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "1"
     "XDG_CACHE_HOME"                        = "/tmp/.cache"
   }
+
   tags = local.tags
 
   lifecycle {
     ignore_changes = [tags]
-  }  
-}
-
-# Actual function deployment
-resource "null_resource" "functions" {
-  # These define build order
-  depends_on = [azurerm_service_plan.this, azurerm_linux_function_app.this]
-
-  # These will trigger a redeploy
-  triggers = {
-    functions    = "${local.version}_${join("+", [for value in local.functions : value["name"]])}"
-    service_plan = "${azurerm_service_plan.this.id}_${local.app_sku}"
-    function_app = "${azurerm_linux_function_app.this.id}_${azurerm_linux_function_app.this.site_config[0].application_stack[0].python_version}"
-  }
-
-  provisioner "local-exec" {
-    command = <<EOF
-    echo "Waiting for other deployments to finish..."
-    sleep 150
-    cd ../azfunctions/processing
-    echo "Deploying functions from $(pwd)"
-    func azure functionapp publish ${local.app_name} --python
-    cd -
-    EOF
   }
 }
