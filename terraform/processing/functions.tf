@@ -5,6 +5,16 @@ resource "azurerm_resource_group" "this" {
   tags     = local.tags
 }
 
+resource "azurerm_storage_account" "processor" {
+  name                     = "st${var.project_name}appproc"
+  resource_group_name      = azurerm_resource_group.this.name
+  location                 = azurerm_resource_group.this.location
+  account_tier             = "Standard"
+  account_kind             = "StorageV2"
+  account_replication_type = "LRS"
+  tags                     = local.tags
+}
+
 # For storing logs
 resource "azurerm_application_insights" "this" {
   name                = "insights-${var.project_name}-processing"
@@ -33,8 +43,8 @@ resource "azurerm_linux_function_app" "this" {
   resource_group_name         = azurerm_resource_group.this.name
 
   service_plan_id             = azurerm_service_plan.this.id
-  storage_account_name        = var.data_storage_account.name
-  storage_account_access_key  = var.data_storage_account.primary_access_key
+  storage_account_name        = azurerm_storage_account.processor.name
+  storage_account_access_key  = azurerm_storage_account.processor.primary_access_key
 
   site_config {
     elastic_instance_minimum  = 1
@@ -62,6 +72,14 @@ resource "azurerm_linux_function_app" "this" {
     "PSQL_USER"                             = var.database_user
     "SCM_DO_BUILD_DURING_DEPLOYMENT"        = "1"
     "XDG_CACHE_HOME"                        = "/tmp/.cache"
+  }
+  storage_account {
+    account_name        = var.data_storage_account.name
+    access_key          = var.data_storage_account.primary_access_key
+    name                = "InputData"
+    share_name          = "data"
+    type                = "AzureBlob"
+    mount_path          = "/data"
   }
 
   tags = local.tags
