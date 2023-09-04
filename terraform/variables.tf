@@ -51,6 +51,11 @@ variable "sendfrom_email" {
   sensitive   = true
   default     = "test@example.com"
 }
+variable "pygeoapi_config_output_location" {
+  description = "Location to output pygeoapi configuration variables to"
+  default     = ""
+  type        = string
+}
 
 # Local variables
 locals {

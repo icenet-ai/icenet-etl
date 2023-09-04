@@ -35,3 +35,7 @@ output "database_names" {
   description = "Database names from PostgreSQL"
   value       = var.database_names
 }
+output "data_system_topic" {
+  description = "System topic for hooking up delivery events"
+  value       = azurerm_eventgrid_system_topic.data
+}

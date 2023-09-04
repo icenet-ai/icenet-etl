@@ -1,6 +1,6 @@
 variable "project_name" {
-    description = "Project name for resource naming"
-    type    = string
+  description = "Project name for resource naming"
+  type    = string
 }
 variable "location" {
   description = "Which Azure location to build in"
@@ -15,6 +15,9 @@ variable "data_storage_account" {
 }
 variable "data_storage_resource_group" {
   description = "Input storage account resource group"
+}
+variable "data_topic" {
+  description = "Topic for input delivery from storage account"
 }
 variable "docker_username" {
   description = "Which Docker username to user"

@@ -27,21 +27,9 @@ resource "azurerm_eventgrid_event_subscription" "processing_subs" {
   }
 }
 
-## Storage events
-resource "azurerm_eventgrid_system_topic" "storage" {
-  name                = "egs-${var.project_name}-forecast-topic"
-  location            = var.location
-  resource_group_name = var.data_storage_resource_group.name
-
-  source_arm_resource_id = var.data_storage_account.id
-  topic_type             = "Microsoft.Storage.StorageAccounts"
-
-  tags = local.tags
-}
-
 resource "azurerm_eventgrid_system_topic_event_subscription" "egs-forecast-topic" {
-  name                = "sub-${var.project_name}-forecast-topic"
-  system_topic        = "egs-${var.project_name}-forecast-topic"
+  name                = "sub-fcproc-${var.project_name}-data-topic"
+  system_topic        = var.data_topic.name
 
   # This is documented as the location of the system topic, but it still throws resource not found
   resource_group_name = var.data_storage_resource_group.name
@@ -70,7 +58,7 @@ resource "azurerm_eventgrid_system_topic_event_subscription" "egs-forecast-topic
   advanced_filter {
     string_in {
       key    = "data.api"
-      values = ["PutBlob"]
+      values = ["PutBlob", "PutBlockList"]
     }
   }
 }

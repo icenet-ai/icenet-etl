@@ -5,6 +5,16 @@ resource "azurerm_resource_group" "this" {
   tags     = local.tags
 }
 
+resource "azurerm_storage_account" "forecastprocessor" {
+  name                     = "st${var.project_name}appfcproc"
+  resource_group_name      = azurerm_resource_group.this.name
+  location                 = azurerm_resource_group.this.location
+  account_tier             = "Standard"
+  account_kind             = "StorageV2"
+  account_replication_type = "LRS"
+  tags                     = local.tags
+}
+
 resource "azurerm_application_insights" "this" {
   name                = "insights-${var.project_name}-fcproc"
   location            = var.location
@@ -49,8 +59,8 @@ resource "azurerm_linux_function_app" "this" {
   resource_group_name        = azurerm_resource_group.this.name
   service_plan_id            = azurerm_service_plan.this.id
 
-  storage_account_name       = var.data_storage_account.name
-  storage_account_access_key = var.data_storage_account.primary_access_key
+  storage_account_name       = azurerm_storage_account.forecastprocessor.name
+  storage_account_access_key = azurerm_storage_account.forecastprocessor.primary_access_key
 
   site_config {
     elastic_instance_minimum  = 1
@@ -73,6 +83,7 @@ resource "azurerm_linux_function_app" "this" {
     "COMMS_ENDPOINT"                 = azurerm_communication_service.comms.primary_connection_string
     "COMMS_TO_EMAIL"                 = var.notification_email
     "COMMS_FROM_EMAIL"               = var.sendfrom_email
+    "FORECAST_PROCESSING_CONFIG"     = "/data/event-processing.yaml"
     # For building on deploy
     #"ENABLE_ORYX_BUILD"              = "true"
     #"SCM_DO_BUILD_DURING_DEPLOYMENT" = "true"
@@ -81,6 +92,10 @@ resource "azurerm_linux_function_app" "this" {
     # enabled which mounts over the contents of the container.
     # https://github.com/Azure/azure-functions-docker/issues/642
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
+  }
+  identity {
+    type          = "SystemAssigned"
+    identity_ids  = []
   }
   storage_account {
     account_name  = var.data_storage_account.name
@@ -91,4 +106,30 @@ resource "azurerm_linux_function_app" "this" {
     mount_path    = "/data"
   }
   tags = local.tags
+  lifecycle {
+    ignore_changes = [tags]
+  }
+}
+
+resource "azurerm_role_definition" "app_data_read" {
+  description        = "Allows for read access to Azure Storage blob containers and data"
+  name               = "${local.app_name}-role-read-forecast-data"
+  scope              = var.data_storage_account.id
+
+  permissions {
+      actions          = [
+          "Microsoft.Storage/storageAccounts/blobServices/containers/read",
+      ]
+      data_actions     = [
+          "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+      ]
+      not_actions      = []
+      not_data_actions = []
+  }
+}
+
+resource "azurerm_role_assignment" "app_data_read_assoc" {
+  scope              = var.data_storage_account.id
+  role_definition_id = azurerm_role_definition.app_data_read.role_definition_resource_id
+  principal_id       = azurerm_linux_function_app.this.identity.0.principal_id
 }

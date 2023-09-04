@@ -10,6 +10,12 @@ variable "location" {
 variable "data_storage_account" {
   description = "Storage account containing input data"
 }
+variable "data_storage_resource_group" {
+  description = "Input storage account resource group"
+}
+variable "data_topic" {
+  description = "Topic for input delivery from storage account"
+}
 variable "database_fqdn" {
   description = "Database server FQDN"
   type        = string
@@ -53,13 +59,14 @@ locals {
     },
     var.default_tags,
   )
-  version   = yamldecode(file("../azfunctions/processing/config.yaml"))["version"]
-  functions = yamldecode(file("../azfunctions/processing/config.yaml"))["functions"]
   app_name  = "app-${var.project_name}-processing"
+
   # https://docs.microsoft.com/en-us/azure/azure-functions/functions-premium-plan#available-instance-skus
   # ElasticPremium  EP1  1 core   3.5  GB RAM
   # ElasticPremium  EP2  2 core   7    GB RAM
   # ElasticPremium  EP3  4 core  14    GB RAM
   app_sku_category = "ElasticPremium"
   app_sku          = "EP1"
+  event_retries    = 1
+  event_ttl        = 1
 }

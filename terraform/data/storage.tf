@@ -32,6 +32,18 @@ resource "azurerm_storage_share" "data_share" {
   }
 }
 
+## Storage events
+resource "azurerm_eventgrid_system_topic" "data" {
+  name                = "egs-${var.project_name}-data-topic"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+
+  source_arm_resource_id = azurerm_storage_account.data.id
+  topic_type             = "Microsoft.Storage.StorageAccounts"
+
+  tags = local.tags
+}
+
 resource "azurerm_storage_account_network_rules" "data_rules" {
   storage_account_id         = azurerm_storage_account.data.id
 

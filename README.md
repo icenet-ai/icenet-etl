@@ -54,6 +54,16 @@ terraform init -backend-config=backend.[[ENV]].secrets \
 
 **Note that a full run from fresh will likely fail and the apply need rerunning, because we've not sorted all the resource chaining out yet**
 
+#### NOTE: deploy InputBlobTrigger
+
+This is a WIP issue, the processing application needs to be deployed before a final run to deploy a function app that can be
+targeted by the event grid subscription. See [this github issue](https://github.com/icenet-ai/icenet-etl/issues/43)
+
+### Provision email domain, connect and add to configuration
+
+This is not achievable via the terraform provider yet, so you'll need to provision the email domain for sending manually,
+connect it to the comms provider and then add the notification_email address to the `azure.[[ENV]].secrets` file.
+
 ### Interfacing with IceNet pipeline
 
 In order to process `NetCDF` files created by the [IceNet pipeline](https://github.com/icenet-ai/icenet-pipeline), these need to be uploaded to the blob storage created by the `Terraform` commands above.
@@ -86,6 +96,17 @@ Follow [the instructions here](https://docs.microsoft.com/en-us/azure/cognitive-
 * storage container: `input`
 
 The SAS token will need: `Read` and `List` permissions.
+
+## Application deployment
+
+`make deploy-azure` basically deploys each of the applications from each of these repositories
+
+* icenet-geoapi: secrets file is output to repository if variable is set, 
+* icenet-geoapi-processing: deployment to the function app is manual, which will be required as mentioned above
+* icenet-event-processor: this is deployed from docker or updated in the container if using dev
+* icenet-application: this is deployed from github using deploy/sync via a source manual integration
+
+This needs to be done manually, because with a properly configured perimeter this will be delegated to a secure internal host. If this were in terraform, it would make the implementation much more of a mission!
 
 ## Versioning
 
