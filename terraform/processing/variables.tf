@@ -10,6 +10,12 @@ variable "location" {
 variable "data_storage_account" {
   description = "Storage account containing input data"
 }
+variable "data_storage_resource_group" {
+  description = "Input storage account resource group"
+}
+variable "data_topic" {
+  description = "Topic for input delivery from storage account"
+}
 variable "database_fqdn" {
   description = "Database server FQDN"
   type        = string
@@ -61,4 +67,6 @@ locals {
   # ElasticPremium  EP3  4 core  14    GB RAM
   app_sku_category = "ElasticPremium"
   app_sku          = "EP1"
+  event_retries    = 1
+  event_ttl        = 1
 }

@@ -34,6 +34,7 @@ module "data" {
 module "processing" {
   source                       = "./processing"
   data_storage_account         = module.data.storage_account
+  data_storage_resource_group  = module.data.resource_group
   database_resource_group_name = module.data.resource_group.name
   database_fqdn                = module.data.server_fqdn
   database_host                = module.data.server_name
@@ -44,6 +45,7 @@ module "processing" {
   project_name                 = local.project_name
   default_tags                 = local.tags
   subnet_id                    = module.network.private_subnet.id
+  data_topic                   = module.data.data_system_topic
 }
 
 module "web" {
@@ -94,6 +96,7 @@ module "forecast_processor" {
   default_tags                 = local.tags
   data_storage_account         = module.data.storage_account
   data_storage_resource_group  = module.data.resource_group
+  data_topic                   = module.data.data_system_topic
   processing_resource_group    = module.processing.resource_group
   subnet_id                    = module.network.public_subnet.id
   docker_username              = var.docker_username

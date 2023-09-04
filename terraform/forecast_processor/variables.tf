@@ -16,6 +16,9 @@ variable "data_storage_account" {
 variable "data_storage_resource_group" {
   description = "Input storage account resource group"
 }
+variable "data_topic" {
+  description = "Topic for input delivery from storage account"
+}
 variable "docker_username" {
   description = "Which Docker username to user"
   type        = string
