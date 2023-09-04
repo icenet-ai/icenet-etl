@@ -97,6 +97,17 @@ Follow [the instructions here](https://docs.microsoft.com/en-us/azure/cognitive-
 
 The SAS token will need: `Read` and `List` permissions.
 
+## Application deployment
+
+`make deploy-azure` basically deploys each of the applications from each of these repositories
+
+* icenet-geoapi: secrets file is output to repository if variable is set, 
+* icenet-geoapi-processing: deployment to the function app is manual, which will be required as mentioned above
+* icenet-event-processor: this is deployed from docker or updated in the container if using dev
+* icenet-application: this is deployed from github using deploy/sync via a source manual integration
+
+This needs to be done manually, because with a properly configured perimeter this will be delegated to a secure internal host. If this were in terraform, it would make the implementation much more of a mission!
+
 ## Versioning
 
 There's no incremental versioning at present.
