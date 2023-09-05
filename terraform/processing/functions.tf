@@ -12,6 +12,13 @@ resource "azurerm_storage_account" "processor" {
   account_tier             = "Standard"
   account_kind             = "StorageV2"
   account_replication_type = "LRS"
+
+  network_rules {
+    default_action         = "Deny"
+    virtual_network_subnet_ids = [var.subnet_id]
+    bypass                 = ["AzureServices"]
+  }
+
   tags                     = local.tags
 }
 

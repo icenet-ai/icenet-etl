@@ -6,6 +6,21 @@ resource "azurerm_storage_account" "data" {
   account_tier             = "Standard"
   account_kind             = "StorageV2"
   account_replication_type = "LRS"
+
+  public_network_access_enabled = true
+
+  network_rules {
+    default_action             = "Deny"
+    virtual_network_subnet_ids = [
+      var.public_subnet_id,
+      var.private_subnet_id
+    ]
+    ip_rules = [
+      for ip in var.allowed_cidrs : replace(ip, "/32", "")
+    ]
+    bypass                     = ["AzureServices"]
+  }
+
   tags                     = local.tags
 }
 
@@ -42,13 +57,4 @@ resource "azurerm_eventgrid_system_topic" "data" {
   topic_type             = "Microsoft.Storage.StorageAccounts"
 
   tags = local.tags
-}
-
-resource "azurerm_storage_account_network_rules" "data_rules" {
-  storage_account_id         = azurerm_storage_account.data.id
-
-  default_action             = "Allow"
-
-  virtual_network_subnet_ids = [var.public_subnet_id]
-  bypass                     = ["None"]
 }
