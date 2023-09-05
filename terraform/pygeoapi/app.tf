@@ -25,14 +25,8 @@ resource "azurerm_linux_web_app" "this" {
     application_stack {
       python_version = "3.9"
     }
-  app_command_line = "python run.py"
-# TODO: IP restrictions
-#    ip_restriction {
-#      virtual_network_subnet_id = var.subnet_id
-#    }
-    vnet_route_all_enabled = true
+    app_command_line = "python run.py"
   }
-  virtual_network_subnet_id = var.subnet_id
   app_settings = {
     "POST_BUILD_COMMAND"             = "post_build.sh",
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1",

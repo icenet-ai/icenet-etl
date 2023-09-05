@@ -31,16 +31,10 @@ resource "azurerm_subnet" "public" {
   virtual_network_name  = azurerm_virtual_network.vnet.name
 
   address_prefixes  = ["172.16.16.0/20"]
-  service_endpoints = ["Microsoft.Storage"]
 
-  delegation {
-    name = "delegation"
-
-    service_delegation {
-      actions = ["Microsoft.Network/virtualNetworks/subnets/action"]
-      name    = "Microsoft.Web/serverFarms"
-    }
-  }
+  # Public repository for uploads (via gateway?)
+  # Web applications accessed via the gateway
+  service_endpoints     = local.svc_endpoints
 }
 
 # Resources not accessible from the internet
@@ -50,14 +44,11 @@ resource "azurerm_subnet" "private" {
   virtual_network_name  = azurerm_virtual_network.vnet.name
 
   address_prefixes  = ["172.16.128.0/20"]
-  service_endpoints = ["Microsoft.Storage", "Microsoft.Web"]
 
-#  delegation {
-#    name = "delegation"
-#    service_delegation {
-#      name = "Microsoft.Web/serverFarms"
-#    }
-#  }
+  # Private storage (internal services)
+  # Function apps (internal storage/data processing only)
+  # PSQL (used by Azure hosted services in public only)
+  service_endpoints     = local.svc_endpoints
 }
 
 resource "azurerm_public_ip" "gateway_ip" {
