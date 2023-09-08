@@ -14,6 +14,9 @@ variable "private_subnet_id" {
     description = "Private subnet ID to deploy in"
     type = string
 }
+variable "dns_zone" {
+  description = "VNet private DNS zone"
+}
 
 ##
 # PostgreSQL variables

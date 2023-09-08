@@ -7,6 +7,9 @@ variable "location" {
   default     = "uksouth"
 }
 
+variable "dns_zone" {
+  description = "VNet private DNS zone"
+}
 variable "processing_resource_group" {
   description = "Resource group for processing"
 }

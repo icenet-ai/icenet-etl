@@ -22,6 +22,25 @@ resource "azurerm_storage_account" "processor" {
   tags                     = local.tags
 }
 
+resource "azurerm_private_endpoint" "proc_app_storage_endpoint" {
+  name                = "pvt-${var.project_name}-proc-app"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  subnet_id           = var.subnet_id
+
+  private_service_connection {
+    name              = "pvt-${var.project_name}-proc-app"
+    is_manual_connection = "false"
+    private_connection_resource_id = azurerm_storage_account.processor.id
+    subresource_names = ["blob"]
+  }
+
+  private_dns_zone_group {
+    name                 = "default"
+    private_dns_zone_ids = [var.dns_zone.id]
+  }
+}
+
 # For storing logs
 resource "azurerm_application_insights" "this" {
   name                = "insights-${var.project_name}-processing"
@@ -93,5 +112,24 @@ resource "azurerm_linux_function_app" "this" {
 
   lifecycle {
     ignore_changes = [tags]
+  }
+}
+
+resource "azurerm_private_endpoint" "proc_endpoint" {
+  name                = "pvt-${var.project_name}-processing"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  subnet_id           = var.subnet_id
+
+  private_service_connection {
+    name              = "pvt-${var.project_name}-processing"
+    is_manual_connection = "false"
+    private_connection_resource_id = azurerm_linux_function_app.this.id
+    subresource_names = ["sites"]
+  }
+
+  private_dns_zone_group {
+    name                 = "default"
+    private_dns_zone_ids = [var.dns_zone.id]
   }
 }

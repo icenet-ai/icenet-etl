@@ -34,3 +34,22 @@ resource "azurerm_linux_web_app" "this" {
   }
   tags = local.tags
 }
+
+resource "azurerm_private_endpoint" "pygeoapi" {
+  name                = "pvt-${var.project_name}-pygeoapi"
+  location            = var.webapps_resource_group.location
+  resource_group_name = var.webapps_resource_group.name
+  subnet_id           = var.subnet_id
+
+  private_service_connection {
+    name              = "pvt-${var.project_name}-pygeoapi"
+    is_manual_connection = "false"
+    private_connection_resource_id = azurerm_linux_web_app.this.id
+    subresource_names = ["sites"]
+  }
+
+  private_dns_zone_group {
+    name                 = "default"
+    private_dns_zone_ids = [var.dns_zone.id]
+  }
+}

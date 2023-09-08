@@ -32,6 +32,9 @@ resource "azurerm_subnet" "public" {
 
   address_prefixes  = ["172.16.16.0/20"]
 
+  private_endpoint_network_policies_enabled = false
+  private_link_service_network_policies_enabled = false
+
   # Public repository for uploads (via gateway?)
   # Web applications accessed via the gateway
   service_endpoints     = local.svc_endpoints
@@ -45,6 +48,9 @@ resource "azurerm_subnet" "private" {
 
   address_prefixes  = ["172.16.128.0/20"]
 
+  private_endpoint_network_policies_enabled = false
+  private_link_service_network_policies_enabled = false
+  
   # Private storage (internal services)
   # Function apps (internal storage/data processing only)
   # PSQL (used by Azure hosted services in public only)

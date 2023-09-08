@@ -22,6 +22,25 @@ resource "azurerm_storage_account" "forecastprocessor" {
   tags                     = local.tags
 }
 
+resource "azurerm_private_endpoint" "evtproc_app_storage_endpoint" {
+  name                = "pvt-${var.project_name}-evtproc-app"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  subnet_id           = var.subnet_id
+
+  private_service_connection {
+    name              = "pvt-${var.project_name}-evtproc-app"
+    is_manual_connection = "false"
+    private_connection_resource_id = azurerm_storage_account.forecastprocessor.id
+    subresource_names = ["blob"]
+  }
+
+  private_dns_zone_group {
+    name                 = "default"
+    private_dns_zone_ids = [var.dns_zone.id]
+  }
+}
+
 resource "azurerm_application_insights" "this" {
   name                = "insights-${var.project_name}-fcproc"
   location            = var.location
@@ -139,4 +158,23 @@ resource "azurerm_role_assignment" "app_data_read_assoc" {
   scope              = var.data_storage_account.id
   role_definition_id = azurerm_role_definition.app_data_read.role_definition_resource_id
   principal_id       = azurerm_linux_function_app.this.identity.0.principal_id
+}
+
+resource "azurerm_private_endpoint" "event_proc_endpoint" {
+  name                = "pvt-${var.project_name}-event-processing"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  subnet_id           = var.subnet_id
+
+  private_service_connection {
+    name              = "pvt-${var.project_name}-event-processing"
+    is_manual_connection = "false"
+    private_connection_resource_id = azurerm_linux_function_app.this.id
+    subresource_names = ["sites"]
+  }
+
+  private_dns_zone_group {
+    name                 = "default"
+    private_dns_zone_ids = [var.dns_zone.id]
+  }
 }
