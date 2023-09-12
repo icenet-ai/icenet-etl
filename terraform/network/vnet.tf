@@ -50,7 +50,7 @@ resource "azurerm_subnet" "private" {
 
   private_endpoint_network_policies_enabled = false
   private_link_service_network_policies_enabled = false
-  
+
   # Private storage (internal services)
   # Function apps (internal storage/data processing only)
   # PSQL (used by Azure hosted services in public only)
@@ -63,4 +63,24 @@ resource "azurerm_public_ip" "gateway_ip" {
   resource_group_name = azurerm_resource_group.this.name
   allocation_method   = "Static"
   sku                 = "Standard"
+  sku_tier            = "Regional"
+
+  ip_tags             = {}
+  zones               = []
+
+  tags                = local.tags
+}
+
+resource "azurerm_public_ip" "nat_ip" {
+  name                = "natip"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  sku_tier            = "Regional"
+
+  ip_tags             = {}
+  zones               = []
+
+  tags                = local.tags
 }
