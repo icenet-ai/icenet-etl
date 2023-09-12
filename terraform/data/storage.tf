@@ -10,57 +10,58 @@ resource "azurerm_storage_account" "data" {
   public_network_access_enabled = true
 
   network_rules {
-    default_action             = "Deny"
-    virtual_network_subnet_ids = [
-      var.public_subnet_id,
-      var.private_subnet_id
-    ]
-    ip_rules = [
-      for ip in var.allowed_cidrs : replace(ip, "/32", "")
-    ]
+    default_action             = "Allow"
+#    virtual_network_subnet_ids = [
+#      var.public_subnet_id,
+#      var.private_subnet_id
+#    ]
+#    ip_rules = [
+#      for ip in var.allowed_cidrs : replace(ip, "/32", "")
+#    ]
     bypass                     = ["AzureServices"]
   }
 
   tags                     = local.tags
 }
 
-resource "azurerm_private_endpoint" "data_blob" {
-  name                = "pvt-${var.project_name}-data-blob"
-  location            = azurerm_resource_group.this.location
-  resource_group_name = azurerm_resource_group.this.name
-  subnet_id           = var.public_subnet_id
-
-  private_service_connection {
-    name              = "pvt-${var.project_name}-data-blob"
-    is_manual_connection = "false"
-    private_connection_resource_id = azurerm_storage_account.data.id
-    subresource_names = ["blob"]
-  }
-
-  private_dns_zone_group {
-    name                 = "default"
-    private_dns_zone_ids = [var.dns_zone.id]
-  }
-}
-
-resource "azurerm_private_endpoint" "data_file" {
-  name                = "pvt-${var.project_name}-data-file"
-  location            = azurerm_resource_group.this.location
-  resource_group_name = azurerm_resource_group.this.name
-  subnet_id           = var.public_subnet_id
-
-  private_service_connection {
-    name              = "pvt-${var.project_name}-data-file"
-    is_manual_connection = "false"
-    private_connection_resource_id = azurerm_storage_account.data.id
-    subresource_names = ["file"]
-  }
-
-  private_dns_zone_group {
-    name                 = "default"
-    private_dns_zone_ids = [var.dns_zone.id]
-  }
-}
+# TODO: https://learn.microsoft.com/en-us/azure/storage/files/storage-files-networking-endpoints?tabs=azure-portal
+#resource "azurerm_private_endpoint" "data_blob" {
+#  name                = "pvt-${var.project_name}-data-blob"
+#  location            = azurerm_resource_group.this.location
+#  resource_group_name = azurerm_resource_group.this.name
+#  subnet_id           = var.public_subnet_id
+#
+#  private_service_connection {
+#    name              = "pvt-${var.project_name}-data-blob"
+#    is_manual_connection = "false"
+#    private_connection_resource_id = azurerm_storage_account.data.id
+#    subresource_names = ["blob"]
+#  }
+#
+#  private_dns_zone_group {
+#    name                 = "default"
+#    private_dns_zone_ids = [var.dns_zone.id]
+#  }
+#}
+#
+#resource "azurerm_private_endpoint" "data_file" {
+#  name                = "pvt-${var.project_name}-data-file"
+#  location            = azurerm_resource_group.this.location
+#  resource_group_name = azurerm_resource_group.this.name
+#  subnet_id           = var.public_subnet_id
+#
+#  private_service_connection {
+#    name              = "pvt-${var.project_name}-data-file"
+#    is_manual_connection = "false"
+#    private_connection_resource_id = azurerm_storage_account.data.id
+#    subresource_names = ["file"]
+#  }
+#
+#  private_dns_zone_group {
+#    name                 = "default"
+#    private_dns_zone_ids = [var.dns_zone.id]
+#  }
+#}
 
 # Create the storage container
 resource "azurerm_storage_container" "data" {

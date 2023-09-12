@@ -1,3 +1,5 @@
+# TODO: Function endpoint doesn't exist prior to deployment
+
 resource "azurerm_eventgrid_system_topic_event_subscription" "egs-processing-data-topic" {
   name                = "sub-proc-${var.project_name}-data-topic"
   system_topic        = var.data_topic.name

@@ -112,5 +112,4 @@ module "web" {
   subnet_id                   = module.network.gateway_subnet.id
   domain_name                 = var.domain_name
   environment                 = var.environment
-  # TODO: endpoints from application, data, pygeoapi
 }

@@ -24,6 +24,12 @@ https://learn.microsoft.com/en-us/azure/app-service/quickstart-python?tabs=flask
 https://github.com/hashicorp/terraform-provider-azurerm/issues/10990
 https://gmusumeci.medium.com/using-private-endpoint-in-azure-storage-account-with-terraform-49b4734ada34
 
+**Deployment in private endpoint based environments**
+https://azure.github.io/AppService/2021/03/01/deploying-to-network-secured-sites-2.html
+
+**Authentication**
+https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-overview
+
 ## Notes
 
 Had to register the comms provider: az provider register --namespace "Microsoft.Communication"
