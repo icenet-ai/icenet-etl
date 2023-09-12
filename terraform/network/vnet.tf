@@ -84,3 +84,32 @@ resource "azurerm_public_ip" "nat_ip" {
 
   tags                = local.tags
 }
+
+resource "azurerm_nat_gateway" "nat_gateway" {
+  name                  = "ng-${var.project_name}-gateway"
+  location              = azurerm_resource_group.this.location
+  resource_group_name   = azurerm_resource_group.this.name
+  sku_name                = "Standard"
+  idle_timeout_in_minutes = 10
+  zones                 = []
+}
+
+resource "azurerm_nat_gateway_public_ip_association" "gateway_ip_assoc" {
+  nat_gateway_id       = azurerm_nat_gateway.nat_gateway.id
+  public_ip_address_id = azurerm_public_ip.nat_ip.id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "nat_gateway" {
+  subnet_id      = azurerm_subnet.gateway.id
+  nat_gateway_id = azurerm_nat_gateway.nat_gateway.id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "nat_public" {
+  subnet_id      = azurerm_subnet.public.id
+  nat_gateway_id = azurerm_nat_gateway.nat_gateway.id
+}
+
+resource "azurerm_subnet_nat_gateway_association" "nat_private" {
+  subnet_id      = azurerm_subnet.private.id
+  nat_gateway_id = azurerm_nat_gateway.nat_gateway.id
+}
