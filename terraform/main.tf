@@ -31,14 +31,6 @@ module "data" {
   dns_zone            = module.network.dns_zone
 }
 
-module "web" {
-  source                      = "./web"
-  default_tags                = local.tags
-  project_name                = local.project_name
-  location                    = var.location
-  frontend_ip                 = module.network.gateway_ip
-}
-
 # PyGeoAPI app
 module "pygeoapi" {
   source                      = "./pygeoapi"
@@ -109,4 +101,16 @@ module "forecast_processor" {
   notification_email           = var.notification_email
   sendfrom_email               = var.sendfrom_email
   dns_zone                     = module.network.dns_zone
+}
+
+module "web" {
+  source                      = "./web"
+  default_tags                = local.tags
+  project_name                = local.project_name
+  location                    = var.location
+  frontend_ip                 = module.network.gateway_ip
+  subnet_id                   = module.network.gateway_subnet.id
+  domain_name                 = var.domain_name
+  environment                 = var.environment
+  # TODO: endpoints from application, data, pygeoapi
 }

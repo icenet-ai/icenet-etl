@@ -6,8 +6,18 @@ variable "location" {
   description = "Which Azure location to build in"
   default     = "uksouth"
 }
+variable "domain_name" {
+  description = "Domain name we're using for deployment"
+}
+variable "environment" {
+  description = "Environment we're building"
+}
 variable "frontend_ip" {
   description = "Frontend IP to utilise for load balancer"
+}
+variable "subnet_id" {
+    description = "Subnet ID to deploy in"
+    type = string
 }
 
 variable "default_tags" {
