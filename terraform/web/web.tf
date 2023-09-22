@@ -31,19 +31,19 @@ resource "azurerm_application_gateway" "entrypoint" {
     ip_addresses = []
   }
   backend_address_pool {
-    name         = "ag-pool-${var.project_name}-data"
-    fqdns        = [
-      "st${var.project_name}data.blob.core.windows.net",
-    ]
-    ip_addresses = []
-  }
-  backend_address_pool {
     name         = "ag-pool-${var.project_name}-web"
     fqdns        = [
       "web-${var.project_name}-application.azurewebsites.net",
     ]
     ip_addresses = []
   }
+#  backend_address_pool {
+#    name         = "ag-pool-${var.project_name}-data"
+#    fqdns        = [
+#      "st${var.project_name}data.blob.core.windows.net",
+#    ]
+#    ip_addresses = []
+#  }
 
   backend_http_settings {
       cookie_based_affinity               = "Disabled"
@@ -70,6 +70,7 @@ resource "azurerm_application_gateway" "entrypoint" {
       host_name                           = "web-${var.project_name}-application.azurewebsites.net"
       pick_host_name_from_backend_address = false
       port                                = 80
+      probe_name                          = "auth_probe"
       protocol                            = "Http"
       request_timeout                     = 20
       trusted_root_certificate_names      = []
@@ -123,13 +124,31 @@ resource "azurerm_application_gateway" "entrypoint" {
       protocol                       = "Http"
       require_sni                    = false
   }
-  http_listener {
-      frontend_ip_configuration_name = local.frontend_ip_configuration_name
-      frontend_port_name             = local.frontend_port_name
-      host_name                      = "data.${var.environment}.${var.domain_name}"
-      name                           = "ag-rule-${var.project_name}-data"
-      protocol                       = "Http"
-      require_sni                    = false
+#  http_listener {
+#      frontend_ip_configuration_name = local.frontend_ip_configuration_name
+#      frontend_port_name             = local.frontend_port_name
+#      host_name                      = "data.${var.environment}.${var.domain_name}"
+#      name                           = "ag-rule-${var.project_name}-data"
+#      protocol                       = "Http"
+#      require_sni                    = false
+#  }
+
+  probe {
+    interval            = 30
+    minimum_servers     = 0
+    name                = "auth_probe"
+    path                = "/"
+    pick_host_name_from_backend_http_settings = true
+    protocol            = "Http"
+    timeout             = 30
+    unhealthy_threshold = 3
+
+    match {
+      status_code = [
+        "200-399",
+        "401",
+      ]
+    }
   }
 
   request_routing_rule {
@@ -164,14 +183,14 @@ resource "azurerm_application_gateway" "entrypoint" {
       priority                   = 1003
       rule_type                  = "Basic"
   }
-  request_routing_rule {
-      backend_address_pool_name  = "ag-pool-${var.project_name}-data"
-      backend_http_settings_name = "default-http-settings"
-      http_listener_name         = "ag-rule-${var.project_name}-data"
-      name                       = "ag-rule-${var.project_name}-data"
-      priority                   = 1004
-      rule_type                  = "Basic"
-  }
+#  request_routing_rule {
+#      backend_address_pool_name  = "ag-pool-${var.project_name}-data"
+#      backend_http_settings_name = "default-http-settings"
+#      http_listener_name         = "ag-rule-${var.project_name}-data"
+#      name                       = "ag-rule-${var.project_name}-data"
+#      priority                   = 1004
+#      rule_type                  = "Basic"
+#  }
 
   sku {
     name     = "Standard_v2"

@@ -29,6 +29,7 @@ resource "azurerm_linux_web_app" "this" {
   }
 
   app_settings = {
+    "ICENET_AUTH_LIST"        = "/data/auth_list.json"
     "ICENET_DATA_LOCATION"    = "/data"
 #    "ENABLE_ORYX_BUILD"              = "true"
 #    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true"
