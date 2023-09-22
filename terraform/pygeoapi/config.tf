@@ -4,7 +4,7 @@ resource "null_resource" "write_config" {
   triggers = {
     always_run = "${timestamp()}"
   }
-  
+
   provisioner "local-exec" {
     command = <<EOF
     cat <<SECRETS >${var.config_output_location}

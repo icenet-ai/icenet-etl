@@ -7,6 +7,9 @@ variable "location" {
   default     = "uksouth"
 }
 
+variable "dns_zone" {
+  description = "VNet private DNS zone"
+}
 variable "data_storage_account" {
   description = "Storage account containing input data"
 }

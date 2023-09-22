@@ -27,6 +27,25 @@ resource "azurerm_eventgrid_event_subscription" "processing_subs" {
   }
 }
 
+#resource "azurerm_private_endpoint" "event_domain_endpoint" {
+#  name                = "pvt-${var.project_name}-event-domain"
+#  location            = var.location
+#  resource_group_name = azurerm_resource_group.this.name
+#  subnet_id           = var.subnet_id
+#
+#  private_service_connection {
+#    name              = "pvt-${var.project_name}-event-topic"
+#    is_manual_connection = "false"
+#    private_connection_resource_id = azurerm_eventgrid_domain.processing.id
+#    subresource_names = ["domain"]
+#  }
+#
+#  private_dns_zone_group {
+#    name                 = "default"
+#    private_dns_zone_ids = [var.dns_zone.id]
+#  }
+#}
+
 resource "azurerm_eventgrid_system_topic_event_subscription" "egs-forecast-topic" {
   name                = "sub-fcproc-${var.project_name}-data-topic"
   system_topic        = var.data_topic.name

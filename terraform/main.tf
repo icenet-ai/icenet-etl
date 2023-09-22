@@ -28,32 +28,7 @@ module "data" {
   public_subnet_id    = module.network.public_subnet.id
   storage_mb          = 8192
   key_vault_id        = module.secrets.key_vault_id
-}
-
-# NetCDF processing
-module "processing" {
-  source                       = "./processing"
-  data_storage_account         = module.data.storage_account
-  data_storage_resource_group  = module.data.resource_group
-  database_resource_group_name = module.data.resource_group.name
-  database_fqdn                = module.data.server_fqdn
-  database_host                = module.data.server_name
-  database_name                = module.data.database_names[0]
-  database_user                = module.data.admin_username
-  database_password            = module.data.admin_password
-  location                     = var.location
-  project_name                 = local.project_name
-  default_tags                 = local.tags
-  subnet_id                    = module.network.private_subnet.id
-  data_topic                   = module.data.data_system_topic
-}
-
-module "web" {
-  source                      = "./web"
-  default_tags                = local.tags
-  project_name                = local.project_name
-  location                    = var.location
-  frontend_ip                 = module.network.gateway_ip
+  dns_zone            = module.network.dns_zone
 }
 
 # PyGeoAPI app
@@ -88,6 +63,27 @@ module "application" {
 ##
 # Downstream processing elements, quite likely should always be at the end of the run
 #
+# These exist in the private subnet, as access is delegated to web applications
+# and these are typically function apps running without exposed interfaces
+
+# NetCDF processing
+module "processing" {
+  source                       = "./processing"
+  data_storage_account         = module.data.storage_account
+  data_storage_resource_group  = module.data.resource_group
+  database_resource_group_name = module.data.resource_group.name
+  database_fqdn                = module.data.server_fqdn
+  database_host                = module.data.server_name
+  database_name                = module.data.database_names[0]
+  database_user                = module.data.admin_username
+  database_password            = module.data.admin_password
+  location                     = var.location
+  project_name                 = local.project_name
+  default_tags                 = local.tags
+  subnet_id                    = module.network.private_subnet.id
+  data_topic                   = module.data.data_system_topic
+  dns_zone                     = module.network.dns_zone
+}
 
 # Forecast event processing and event grid subs
 module "forecast_processor" {
@@ -99,9 +95,21 @@ module "forecast_processor" {
   data_storage_resource_group  = module.data.resource_group
   data_topic                   = module.data.data_system_topic
   processing_resource_group    = module.processing.resource_group
-  subnet_id                    = module.network.public_subnet.id
+  subnet_id                    = module.network.private_subnet.id
   docker_username              = var.docker_username
   docker_password              = var.docker_password
   notification_email           = var.notification_email
   sendfrom_email               = var.sendfrom_email
+  dns_zone                     = module.network.dns_zone
+}
+
+module "web" {
+  source                      = "./web"
+  default_tags                = local.tags
+  project_name                = local.project_name
+  location                    = var.location
+  frontend_ip                 = module.network.gateway_ip
+  subnet_id                   = module.network.gateway_subnet.id
+  domain_name                 = var.domain_name
+  environment                 = var.environment
 }

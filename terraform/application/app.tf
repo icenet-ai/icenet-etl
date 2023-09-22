@@ -29,7 +29,10 @@ resource "azurerm_linux_web_app" "this" {
   }
 
   app_settings = {
+    "ICENET_AUTH_LIST"        = "/data/auth_list.json"
     "ICENET_DATA_LOCATION"    = "/data"
+#    "ENABLE_ORYX_BUILD"              = "true"
+#    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true"
   }
 
   storage_account {
@@ -44,21 +47,21 @@ resource "azurerm_linux_web_app" "this" {
   tags = local.tags
 }
 
-#resource "azurerm_private_endpoint" "this" {
-#  name                = "assetsprivateendpoint"
+#resource "azurerm_private_endpoint" "application" {
+#  name                = "pvt-${var.project_name}-application"
 #  location            = var.webapps_resource_group.location
 #  resource_group_name = var.webapps_resource_group.name
 #  subnet_id           = var.subnet_id
 #
-#  private_dns_zone_group {
-#    name = "privatednszonegroup"
-#    private_dns_zone_ids = [var.dns_zone.id]
-#  }
-#
 #  private_service_connection {
-#    name = "privateendpointconnection"
+#    name              = "pvt-${var.project_name}-application"
+#    is_manual_connection = "false"
 #    private_connection_resource_id = azurerm_linux_web_app.this.id
 #    subresource_names = ["sites"]
-#    is_manual_connection = false
+#  }
+#
+#  private_dns_zone_group {
+#    name                 = "default"
+#    private_dns_zone_ids = [var.dns_zone.id]
 #  }
 #}

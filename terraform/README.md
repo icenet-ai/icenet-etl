@@ -20,7 +20,21 @@ https://learn.microsoft.com/en-us/azure/app-service/scripts/terraform-secure-bac
 web/README.md
 https://learn.microsoft.com/en-us/azure/app-service/quickstart-python?tabs=flask%2Cwindows%2Cazure-cli%2Cazure-cli-deploy%2Cdeploy-instructions-azportal%2Cterminal-bash%2Cdeploy-instructions-zip-azcli
 
+**Function applications - deployment notes**
+https://github.com/hashicorp/terraform-provider-azurerm/issues/10990
+https://gmusumeci.medium.com/using-private-endpoint-in-azure-storage-account-with-terraform-49b4734ada34
+
+**Deployment in private endpoint based environments**
+https://azure.github.io/AppService/2021/03/01/deploying-to-network-secured-sites-2.html
+
+**Authentication**
+https://learn.microsoft.com/en-us/azure/app-service/scenario-secure-app-overview
 
 ## Notes
 
 Had to register the comms provider: az provider register --namespace "Microsoft.Communication"
+
+## Architectural Design
+
+Applications are deployed only once the infrastructure is in place, separation of concerns
+and far easier to manage with securing of the network structure

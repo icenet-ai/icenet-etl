@@ -25,14 +25,8 @@ resource "azurerm_linux_web_app" "this" {
     application_stack {
       python_version = "3.9"
     }
-  app_command_line = "python run.py"
-# TODO: IP restrictions
-#    ip_restriction {
-#      virtual_network_subnet_id = var.subnet_id
-#    }
-    vnet_route_all_enabled = true
+    app_command_line = "python run.py"
   }
-  virtual_network_subnet_id = var.subnet_id
   app_settings = {
     "POST_BUILD_COMMAND"             = "post_build.sh",
     "SCM_DO_BUILD_DURING_DEPLOYMENT" = "1",
@@ -40,3 +34,22 @@ resource "azurerm_linux_web_app" "this" {
   }
   tags = local.tags
 }
+
+#resource "azurerm_private_endpoint" "pygeoapi" {
+#  name                = "pvt-${var.project_name}-pygeoapi"
+#  location            = var.webapps_resource_group.location
+#  resource_group_name = var.webapps_resource_group.name
+#  subnet_id           = var.subnet_id
+#
+#  private_service_connection {
+#    name              = "pvt-${var.project_name}-pygeoapi"
+#    is_manual_connection = "false"
+#    private_connection_resource_id = azurerm_linux_web_app.this.id
+#    subresource_names = ["sites"]
+#  }
+#
+#  private_dns_zone_group {
+#    name                 = "default"
+#    private_dns_zone_ids = [var.dns_zone.id]
+#  }
+#}

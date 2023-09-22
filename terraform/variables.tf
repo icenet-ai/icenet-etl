@@ -17,6 +17,10 @@ variable "tenant_id" {
 }
 
 # These have sensible defaults
+variable "domain_name" {
+  description = "Domain name we're using for deployment"
+  default     = "icenet.ai"
+}
 variable "environment" {
   description = "Environment we're building"
   default     = "dev"

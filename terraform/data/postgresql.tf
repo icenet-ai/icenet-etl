@@ -10,7 +10,6 @@ resource "azurerm_postgresql_server" "this" {
   geo_redundant_backup_enabled = false
   auto_grow_enabled            = true
 
-  # TODO: public access - client IP wasn't enabled in pg_hba on fresh restart though?
   public_network_access_enabled = true
 
   administrator_login              = azurerm_key_vault_secret.db_admin_username.value
@@ -24,6 +23,25 @@ resource "azurerm_postgresql_server" "this" {
   }
   tags = local.tags
 }
+
+#resource "azurerm_private_endpoint" "database" {
+#  name                = "pvt-${var.project_name}-database"
+#  location            = var.location
+#  resource_group_name = azurerm_resource_group.this.name
+#  subnet_id           = var.private_subnet_id
+#
+#  private_service_connection {
+#    name              = "pvt-${var.project_name}-database"
+#    is_manual_connection = "false"
+#    private_connection_resource_id = azurerm_postgresql_server.this.id
+#    subresource_names = ["postgresqlServer"]
+#  }
+#
+#  private_dns_zone_group {
+#    name                 = "default"
+#    private_dns_zone_ids = [var.dns_zone.id]
+#  }
+#}
 
 resource "azurerm_postgresql_database" "this" {
   for_each            = toset(var.database_names)
@@ -64,7 +82,7 @@ resource "azurerm_postgresql_firewall_rule" "azure_rules" {
 # Install the PostGIS extension
 resource "postgresql_extension" "postgis" {
   name       = "postgis"
-  depends_on = [azurerm_postgresql_server.this]
+  depends_on = [azurerm_postgresql_server.this, azurerm_postgresql_firewall_rule.user_rules]
 }
 
 # Role names
@@ -73,14 +91,14 @@ resource "postgresql_role" "reader" {
   login            = true
   password         = azurerm_key_vault_secret.db_reader_password.value
   connection_limit = 50
-  depends_on       = [azurerm_postgresql_server.this]
+  depends_on       = [azurerm_postgresql_server.this, azurerm_postgresql_firewall_rule.user_rules]
 }
 resource "postgresql_role" "writer" {
   name             = azurerm_key_vault_secret.db_writer_username.value
   login            = true
   password         = azurerm_key_vault_secret.db_writer_password.value
   connection_limit = 4
-  depends_on       = [azurerm_postgresql_server.this]
+  depends_on       = [azurerm_postgresql_server.this, azurerm_postgresql_firewall_rule.user_rules]
 }
 
 # Role privileges
