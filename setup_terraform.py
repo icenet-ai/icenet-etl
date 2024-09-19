@@ -34,7 +34,7 @@ def get_azure_ids(credential, subscription_name):
     # Connect to Azure clients
     subscription_client = SubscriptionClient(credential=credential)
     tenant_id = get_tenant_id(credential)
-    logging.info(
+    logging.debug(
         f"Tenancy selected: {tenant_id}"
     )
 
@@ -48,7 +48,7 @@ def get_azure_ids(credential, subscription_name):
 
         subscription_id = ""
         for subscription in subscription_client.subscriptions.list():
-            logging.info(
+            logging.debug(
                 f"Found subscription {subscription.display_name} ({subscription.id})"
             )
             if subscription.display_name == subscription_name:
