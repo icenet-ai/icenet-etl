@@ -44,7 +44,7 @@ def get_azure_ids(credential, subscription_name):
         if not len(subscription_list):
             raise Exception(f"""No subscriptions found in this tenancy.
                     Verify subscription is under this tenancy: {tenant_id},
-                    if not, specify tenant_id with `-tid` flag.""")
+                    if not, specify tenant_id with `-td` flag.""")
 
         subscription_id = ""
         for subscription in subscription_client.subscriptions.list():
@@ -58,7 +58,7 @@ def get_azure_ids(credential, subscription_name):
         if not subscription_id:
             raise ValueError(f"""Specified subscription not found in this tenancy.
                     Verify subscription is under this tenancy: {tenant_id},
-                    if not, specify tenant_id with `-tid` flag.""")
+                    if not, specify tenant_id with `-td` flag.""")
         logging.info(
             f"Successfully authenticated using: {credential.__class__.__name__}"
         )
