@@ -108,6 +108,28 @@ The SAS token will need: `Read` and `List` permissions.
 
 This needs to be done manually, because with a properly configured perimeter this will be delegated to a secure internal host. If this were in terraform, it would make the implementation much more of a mission!
 
+## Other deployment instructions
+
+The following are noted from a recent deployment
+
+You have to provision manually the email domain on icenet[ENV]-emails
+Then connect the icenet[ENV]-emails service to icenet[ENV]-comms
+
+Then you need to deploy the applications
+
+  icenet-geoapi-processing
+  1. `export ICENET_ENV=uat`
+  2. `make deploy-azure`
+
+  icenet-application
+  1. `export ICENET_ENV=uat`
+  2. `make deploy-azure` - from https://github.com/icenet-ai/icenet-application
+    OR
+  2. `make deploy-zip` - from the local clone
+
+  icenet-event-processor
+  1. In theory deploys from the docker registry image
+
 ## Versioning
 
 There's no incremental versioning at present.
