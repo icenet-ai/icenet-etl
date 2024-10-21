@@ -140,27 +140,9 @@ resource "azurerm_linux_function_app" "this" {
   }
 }
 
-resource "azurerm_role_definition" "app_data_read" {
-  description        = "Allows for read access to Azure Storage blob containers and data"
-  name               = "${local.app_name}-role-read-forecast-data"
+resource "azurerm_role_assignment" "storage_blob_data_reader_assoc" {
   scope              = var.data_storage_account.id
-
-  permissions {
-      actions          = [
-          "Microsoft.Storage/storageAccounts/blobServices/containers/read",
-          "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action",
-      ]
-      data_actions     = [
-          "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
-      ]
-      not_actions      = []
-      not_data_actions = []
-  }
-}
-
-resource "azurerm_role_assignment" "app_data_read_assoc" {
-  scope              = var.data_storage_account.id
-  role_definition_id = azurerm_role_definition.app_data_read.role_definition_resource_id
+  role_definition_name = "Storage Blob Data Reader"
   principal_id       = azurerm_linux_function_app.this.identity.0.principal_id
 }
 
