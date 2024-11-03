@@ -23,7 +23,7 @@ resource "azurerm_linux_web_app" "this" {
     use_32_bit_worker = false
     always_on         = true
     application_stack {
-      python_version = "3.8"
+      python_version = "3.9"
     }
     app_command_line = "gunicorn icenet_app.app:app"
   }
