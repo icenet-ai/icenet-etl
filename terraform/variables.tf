@@ -27,7 +27,7 @@ variable "service_principal_client_id" {
   sensitive   = true
 }
 variable "service_principal_secret_val" {
-  description = "Secret ID of above service principal"
+  description = "Secret value of above service principal"
   type        = string
   default     = null
   sensitive   = true
