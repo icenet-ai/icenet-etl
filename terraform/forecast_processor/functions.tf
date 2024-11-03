@@ -121,6 +121,13 @@ resource "azurerm_linux_function_app" "this" {
     # enabled which mounts over the contents of the container.
     # https://github.com/Azure/azure-functions-docker/issues/642
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
+    # Use an SAS Token with Blob read/list access
+    "AZURE_STORAGE_SAS_TOKEN" = var.storage_sas_token
+    # Use a service principal with blob read/list access (use either SAS token or service principal)
+    #"AZURE_CLIENT_ID" = var.service_principal_client_id
+    #"AZURE_CLIENT_SECRET" = var.service_principal_secret_val
+    #"AZURE_TENANT_ID" = var.tenant_id
+    #"AZURE_SUBSCRIPTION_ID" = var.subscription_id
   }
   identity {
     type          = "SystemAssigned"
@@ -140,29 +147,11 @@ resource "azurerm_linux_function_app" "this" {
   }
 }
 
-resource "azurerm_role_definition" "app_data_read" {
-  description        = "Allows for read access to Azure Storage blob containers and data"
-  name               = "${local.app_name}-role-read-forecast-data"
-  scope              = var.data_storage_account.id
-
-  permissions {
-      actions          = [
-          "Microsoft.Storage/storageAccounts/blobServices/containers/read",
-          "Microsoft.Storage/storageAccounts/blobServices/generateUserDelegationKey/action",
-      ]
-      data_actions     = [
-          "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
-      ]
-      not_actions      = []
-      not_data_actions = []
-  }
-}
-
-resource "azurerm_role_assignment" "app_data_read_assoc" {
-  scope              = var.data_storage_account.id
-  role_definition_id = azurerm_role_definition.app_data_read.role_definition_resource_id
-  principal_id       = azurerm_linux_function_app.this.identity.0.principal_id
-}
+#resource "azurerm_role_assignment" "storage_blob_data_reader_assoc" {
+#  scope              = var.data_storage_account.id
+#  role_definition_name = "Storage Blob Data Reader"
+#  principal_id       = azurerm_linux_function_app.this.identity.0.principal_id
+#}
 
 #resource "azurerm_private_endpoint" "event_proc_endpoint" {
 #  name                = "pvt-${var.project_name}-event-processing"

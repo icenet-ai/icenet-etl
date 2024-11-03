@@ -53,6 +53,32 @@ variable "default_tags" {
     default = {}
 }
 
+variable "subscription_id" {
+  description = "Which Azure subscription to build in"
+  type        = string
+}
+variable "tenant_id" {
+  description = "Which Azure tenant to build in"
+  type        = string
+}
+variable "storage_sas_token" {
+  description = "Blob storage SAS token"
+  type        = string
+  sensitive   = true
+}
+variable "service_principal_client_id" {
+  description = "The special client/app ID, generated service principal for read/list blob storage access"
+  type        = string
+  default     = null
+  sensitive   = true
+}
+variable "service_principal_secret_val" {
+  description = "Secret ID of above service principal"
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
 # Local variables
 locals {
   tags = merge(

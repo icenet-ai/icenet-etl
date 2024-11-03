@@ -101,6 +101,11 @@ module "forecast_processor" {
   notification_email           = var.notification_email
   sendfrom_email               = var.sendfrom_email
   dns_zone                     = module.network.dns_zone
+  storage_sas_token            = var.storage_sas_token
+  service_principal_client_id  = var.service_principal_client_id
+  service_principal_secret_val = var.service_principal_secret_val
+  tenant_id                    = var.tenant_id
+  subscription_id              = var.subscription_id
 }
 
 module "web" {
