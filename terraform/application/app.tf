@@ -23,7 +23,7 @@ resource "azurerm_linux_web_app" "this" {
     use_32_bit_worker = false
     always_on         = true
     application_stack {
-      python_version = "3.8"
+      python_version = "3.9"
     }
     app_command_line = "gunicorn icenet_app.app:app"
   }
@@ -32,7 +32,8 @@ resource "azurerm_linux_web_app" "this" {
     "ICENET_AUTH_LIST"        = "/data/auth_list.json"
     "ICENET_DATA_LOCATION"    = "/data"
 #    "ENABLE_ORYX_BUILD"              = "true"
-#    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true"
+    "SCM_DO_BUILD_DURING_DEPLOYMENT" = "true"
+    "DOCKER_ENABLE_CI" = "true"
   }
 
   storage_account {
@@ -42,6 +43,18 @@ resource "azurerm_linux_web_app" "this" {
     share_name    = "data"
     type          = "AzureFiles"
     mount_path    = "/data"
+  }
+
+  logs {
+    application_logs {
+      file_system_level = "Information"
+    }
+    http_logs {
+      file_system {
+        retention_in_days = 7
+        retention_in_mb = 100
+      }
+    }
   }
 
   tags = local.tags
